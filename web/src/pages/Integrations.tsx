@@ -8,9 +8,9 @@ import { StatusTag } from "./Overview";
 const NEXT: Record<string, string> = {
   ga4: "Connect Google below. Uses the GA4 Data API (read-only).",
   gsc: "Connect Google below. Uses the Search Console API (read-only).",
-  gbp: "Connect Google, then Google must approve Business Profile API access for the Cloud project (request form: developers.google.com/my-business/content/prereqs). Until then it stays Pending approval.",
-  google_ads: "Connect Google, then add a Google Ads developer token with Basic access (API Center in a manager account). Until then it stays Pending approval.",
-  clarity: "Install Clarity on the site first (it isn't installed today), then create a Data Export API token in Clarity → Settings → Data Export and paste it below. Only the last 1–3 days are available, so history starts on the day you connect.",
+  gbp: "Access requested from Google on 20 Oct 2026 (case 6-1332000041917, usually 7–10 working days). Data starts flowing automatically after approval, with ~18 months of history.",
+  google_ads: "Connect Google. Access is granted to the Cloud project (developer tokens were retired in Sept 2026).",
+  clarity: "Tag is installed and recording. New Clarity projects usually answer the export API only after their first daily processing; the 08:00 sync retries automatically. If it still fails, create a new token in Clarity → Settings → Data export and paste it below.",
   meta_ads: "Paste a Meta system-user token with ads_read and the ad account ID below when access is provided.",
   wordpress: "Install the WPCode snippet that posts form submissions and Click4Appointment bookings to this dashboard.",
 };
