@@ -1,0 +1,124 @@
+/**
+ * WPCode: "Dashboard: lead relay" — PHP Snippet, Run Everywhere.
+ *
+ * Sends Elementor form submissions and Click4Appointment bookings to the dashboard's
+ * lead-ingest function, signed with HMAC-SHA256. The secret lives in wp-config.php:
+ *
+ *   define( 'EDC_LEAD_SECRET', '<value from Supabase: select api_token from private.credentials where provider = ''lead_webhook''>' );
+ *
+ * Nothing here changes existing forms, emails or Google Ads/GA4 tracking. If the dashboard is
+ * down, the site carries on: requests are non-blocking with a short timeout.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
+// Paste the dashboard webhook secret between the quotes (or define EDC_LEAD_SECRET in wp-config.php instead).
+if ( ! defined( 'EDC_LEAD_SECRET' ) ) { define( 'EDC_LEAD_SECRET', 'PASTE-SECRET-HERE' ); }
+
+if ( ! defined( 'EDC_LEAD_ENDPOINT' ) ) { define( 'EDC_LEAD_ENDPOINT', 'https://pymwnsjjztahucqzlqkl.supabase.co/functions/v1/lead-ingest' ); }
+
+function edc_send_lead( array $payload ) {
+	if ( ! defined( 'EDC_LEAD_SECRET' ) || ! EDC_LEAD_SECRET || 'PASTE-SECRET-HERE' === EDC_LEAD_SECRET ) { return; }
+	$body = wp_json_encode( $payload );
+	$ts   = (string) time();
+	$sig  = hash_hmac( 'sha256', $ts . '.' . $body, EDC_LEAD_SECRET );
+	wp_remote_post( EDC_LEAD_ENDPOINT, array(
+		'timeout'  => 4,
+		'blocking' => false,
+		'headers'  => array(
+			'Content-Type'    => 'application/json',
+			'x-edc-timestamp' => $ts,
+			'x-edc-signature' => $sig,
+		),
+		'body'     => $body,
+	) );
+}
+
+function edc_attr_from( $raw ) {
+	$a = json_decode( wp_unslash( (string) $raw ), true );
+	if ( ! is_array( $a ) ) { return array(); }
+	$clean = function ( $t ) {
+		$out = array();
+		foreach ( array( 'source', 'medium', 'campaign', 'term', 'content', 'gclid', 'fbclid', 'landing', 'referrer', 'ts' ) as $k ) {
+			if ( isset( $t[ $k ] ) && is_scalar( $t[ $k ] ) ) { $out[ $k ] = substr( sanitize_text_field( (string) $t[ $k ] ), 0, 500 ); }
+		}
+		return $out;
+	};
+	return array(
+		'first' => isset( $a['first'] ) && is_array( $a['first'] ) ? $clean( $a['first'] ) : null,
+		'last'  => isset( $a['last'] ) && is_array( $a['last'] ) ? $clean( $a['last'] ) : null,
+	);
+}
+
+/* 1) Elementor Pro forms (contact, Free Video Consultation, etc.) */
+add_action( 'elementor_pro/forms/new_record', function ( $record, $handler ) {
+	$fields = array();
+	foreach ( (array) $record->get( 'fields' ) as $id => $f ) {
+		$fields[ $id ] = isset( $f['value'] ) ? $f['value'] : '';
+	}
+	$find = function ( array $keys ) use ( $fields ) {
+		foreach ( $fields as $id => $v ) {
+			foreach ( $keys as $k ) { if ( stripos( $id, $k ) !== false && '' !== $v ) { return sanitize_text_field( $v ); } }
+		}
+		return '';
+	};
+	$form_name = (string) $record->get_form_settings( 'form_name' );
+	$is_video  = stripos( $form_name, 'video' ) !== false;
+	$attr_raw  = isset( $_POST['edc_attr'] ) ? $_POST['edc_attr'] : ( isset( $_COOKIE['edc_attr'] ) ? $_COOKIE['edc_attr'] : '' ); // phpcs:ignore
+
+	edc_send_lead( array(
+		'event'        => $is_video ? 'video_consult' : 'form_submit',
+		'external_ref' => 'elementor-' . md5( wp_json_encode( $fields ) . microtime() ),
+		'occurred_at'  => gmdate( 'c' ),
+		'name'         => $find( array( 'name' ) ),
+		'phone'        => $find( array( 'whatsapp', 'phone', 'mobile', 'tel' ) ),
+		'email'        => $find( array( 'email' ) ),
+		'service'      => $find( array( 'concern', 'service', 'treatment' ) ),
+		'form_name'    => $form_name,
+		'consent'      => '' !== $find( array( 'consent' ) ),
+		'page_url'     => isset( $_SERVER['HTTP_REFERER'] ) ? esc_url_raw( wp_unslash( $_SERVER['HTTP_REFERER'] ) ) : '',
+		'is_test'      => (bool) preg_match( '/\btest\b/i', $find( array( 'name' ) ) ),
+		'attribution'  => edc_attr_from( $attr_raw ),
+	) );
+}, 20, 2 );
+
+/* 2) Click4Appointment bookings, relayed from the browser after the widget reports success */
+add_action( 'wp_enqueue_scripts', function () {
+	wp_register_script( 'edc-dash-cfg', '', array(), null, false );
+	wp_enqueue_script( 'edc-dash-cfg' );
+	wp_add_inline_script( 'edc-dash-cfg', 'window.EDC_DASH=' . wp_json_encode( array(
+		'ajax'  => admin_url( 'admin-ajax.php' ),
+		'nonce' => wp_create_nonce( 'edc_c4a' ),
+	) ) . ';' );
+} );
+
+function edc_c4a_booking() {
+	if ( ! wp_verify_nonce( isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '', 'edc_c4a' ) ) {
+		wp_send_json_error( 'bad nonce', 403 );
+	}
+	// Basic flood control: max 5 relays per IP per 10 minutes.
+	$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : 'x';
+	$key = 'edc_c4a_' . md5( $ip );
+	$n   = (int) get_transient( $key );
+	if ( $n >= 5 ) { wp_send_json_error( 'slow down', 429 ); }
+	set_transient( $key, $n + 1, 10 * MINUTE_IN_SECONDS );
+
+	$g = function ( $k ) { return isset( $_POST[ $k ] ) ? sanitize_text_field( wp_unslash( $_POST[ $k ] ) ) : ''; };
+	$name = $g( 'name' );
+	edc_send_lead( array(
+		'event'          => 'booking_confirmed',
+		'external_ref'   => $g( 'ref' ) ? 'c4a-' . $g( 'ref' ) : 'c4a-' . md5( $g( 'phone' ) . $g( 'appointment_at' ) ),
+		'occurred_at'    => gmdate( 'c' ),
+		'name'           => $name,
+		'phone'          => $g( 'phone' ),
+		'email'          => $g( 'email' ),
+		'service'        => $g( 'service' ),
+		'appointment_at' => $g( 'appointment_at' ),
+		'page_url'       => esc_url_raw( $g( 'page' ) ),
+		'is_test'        => (bool) preg_match( '/\btest\b/i', $name ),
+		'attribution'    => edc_attr_from( isset( $_POST['attr'] ) ? $_POST['attr'] : '' ), // phpcs:ignore
+	) );
+	wp_send_json_success();
+}
+add_action( 'wp_ajax_edc_c4a_booking', 'edc_c4a_booking' );
+add_action( 'wp_ajax_nopriv_edc_c4a_booking', 'edc_c4a_booking' );

@@ -7,11 +7,11 @@ const API = () => `https://googleads.googleapis.com/${Deno.env.get("GOOGLE_ADS_A
 export class PendingApproval extends Error {}
 
 async function gaql(customerId: string, token: string, query: string): Promise<any[]> {
+  // Developer tokens were sunset 9 Sep 2026: access now belongs to the OAuth client's Cloud project.
+  // The header is optional; send it only if a legacy token is configured.
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
   const devToken = Deno.env.get("GOOGLE_ADS_DEVELOPER_TOKEN");
-  if (!devToken) throw new PendingApproval("Google Ads developer token not set (needs Basic access approval)");
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`, "developer-token": devToken, "Content-Type": "application/json",
-  };
+  if (devToken) headers["developer-token"] = devToken;
   const mcc = Deno.env.get("GOOGLE_ADS_LOGIN_CUSTOMER_ID");
   if (mcc) headers["login-customer-id"] = mcc.replace(/-/g, "");
   const r = await fetchRetry(`${API()}/customers/${customerId}/googleAds:searchStream`, {
@@ -21,7 +21,10 @@ async function gaql(customerId: string, token: string, query: string): Promise<a
   if (!r.ok) {
     const msg = JSON.stringify(body).slice(0, 500);
     if (r.status === 401) throw new NotAuthorized(msg);
-    if (/DEVELOPER_TOKEN_NOT_APPROVED|DEVELOPER_TOKEN_PROHIBITED/.test(msg)) throw new PendingApproval(msg);
+    // API not enabled on the project, or project still at Test access (test accounts only).
+    if (/DEVELOPER_TOKEN_NOT_APPROVED|DEVELOPER_TOKEN_PROHIBITED|SERVICE_DISABLED|has not been used in project|ACCESS_LEVEL|TEST_ACCOUNT|only approved for use with test accounts/i.test(msg)) {
+      throw new PendingApproval(msg);
+    }
     throw new Error(`Google Ads ${r.status}: ${msg}`);
   }
   return (Array.isArray(body) ? body : [body]).flatMap((b) => b.results ?? []);

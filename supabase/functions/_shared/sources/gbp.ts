@@ -15,6 +15,8 @@ const parts = (iso: string) => ({ y: +iso.slice(0, 4), m: +iso.slice(5, 7), d: +
 /** Resolve "locations/{id}" for the clinic. Uses a stored id if it looks like a location id. */
 export async function resolveLocation(db: SupabaseClient, token: string, stored: string | null): Promise<string> {
   if (stored?.startsWith("locations/")) return stored;
+  // A bare numeric Business Profile ID is the location id; skips the account-management lookup.
+  if (stored && /^\d{6,}$/.test(stored)) return `locations/${stored}`;
   const accts = await googleJson("https://mybusinessaccountmanagement.googleapis.com/v1/accounts", token);
   for (const a of accts.accounts ?? []) {
     let pageToken = "";

@@ -93,7 +93,9 @@ Deno.serve(async (req) => {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     // GBP Performance API answers 403 until Google approves API access for the project.
-    const gbpGate = source === "gbp" && (e as any)?.status === 403;
+    // New projects also get a 0-requests/minute quota (HTTP 429 RESOURCE_EXHAUSTED) until approval.
+    const gbpGate = source === "gbp" && ((e as any)?.status === 403 ||
+      (/HTTP 429/.test(msg) && /mybusiness|businessprofileperformance/i.test(msg)));
     const status = e instanceof PendingApproval || gbpGate ? "pending_approval"
       : e instanceof NotAuthorized ? "pending_authorization" : "error";
     await db.from("integrations").update({ status, last_error: msg.slice(0, 1000) }).eq("source", source);

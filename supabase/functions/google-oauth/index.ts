@@ -5,7 +5,13 @@ import { admin, callerRole, cors, fetchRetry, json } from "../_shared/util.ts";
 import { GOOGLE_SCOPES } from "../_shared/google.ts";
 
 const redirectUri = () => `${Deno.env.get("SUPABASE_URL")}/functions/v1/google-oauth`;
-const appUrl = () => Deno.env.get("APP_URL") ?? "http://localhost:5173";
+// The live dashboard URL comes from APP_URL, else from private.credentials (provider 'app_url').
+async function appUrl(): Promise<string> {
+  const env = Deno.env.get("APP_URL");
+  if (env) return env.replace(/\/$/, "");
+  const { data } = await admin().rpc("svc_get_credential", { p_provider: "app_url" });
+  return (data?.[0]?.api_token ?? "http://localhost:5173").replace(/\/$/, "");
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -32,7 +38,8 @@ Deno.serve(async (req) => {
 
   // GET callback
   const u = new URL(req.url);
-  const back = (q: string) => Response.redirect(`${appUrl()}/#/integrations?${q}`, 302);
+  const base = await appUrl();
+  const back = (q: string) => Response.redirect(`${base}/#/integrations?${q}`, 302);
   if (u.searchParams.get("error")) return back(`google=error&reason=${encodeURIComponent(u.searchParams.get("error")!)}`);
   const code = u.searchParams.get("code");
   const state = u.searchParams.get("state");
