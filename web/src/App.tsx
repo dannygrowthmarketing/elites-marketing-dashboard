@@ -11,6 +11,7 @@ const Seo = lazy(() => import("./pages/Seo"));
 const Gbp = lazy(() => import("./pages/Gbp"));
 const Website = lazy(() => import("./pages/Website"));
 const Paid = lazy(() => import("./pages/Paid"));
+const AdLibrary = lazy(() => import("./pages/AdLibrary"));
 const Crm = lazy(() => import("./pages/Crm"));
 const Attribution = lazy(() => import("./pages/Attribution"));
 const Insights = lazy(() => import("./pages/Insights"));
@@ -19,7 +20,7 @@ const Settings = lazy(() => import("./pages/Settings"));
 
 const NAV = [
   ["/", "Overview"], ["/insights", "Insights"], ["/seo", "SEO"], ["/gbp", "Business Profile"], ["/website", "Website"],
-  ["/paid", "Paid ads"], ["/crm", "Leads & CRM"], ["/attribution", "Attribution"], ["/integrations", "Integrations"], ["/settings", "Settings"],
+  ["/paid", "Paid ads"], ["/ad-library", "Ad Library"], ["/crm", "Leads & CRM"], ["/attribution", "Attribution"], ["/integrations", "Integrations"], ["/settings", "Settings"],
 ] as const;
 
 export default function App() {
@@ -87,6 +88,7 @@ function Shell({ email }: { email: string }) {
             <Route path="/gbp" element={<Gbp />} />
             <Route path="/website" element={<Website />} />
             <Route path="/paid" element={<Paid />} />
+            <Route path="/ad-library" element={<AdLibrary />} />
             <Route path="/crm" element={<Crm />} />
             <Route path="/attribution" element={<Attribution />} />
             <Route path="/integrations" element={<Integrations />} />

@@ -150,6 +150,37 @@ await as("viewer@x.com", async () => {
   assert.equal(dev.rows[0].device, "MOBILE");
 });
 
+// Ad Library: creatives + per-ad metrics; ratios are left to the client.
+await db.exec(`
+  insert into ads_ads (ad_group_id, ad_id, campaign_id, campaign_name, campaign_status, ad_type, ad_status, headlines, descriptions, final_urls)
+  values ('ag1','ad1','c1','Search TC Palya','ENABLED','RESPONSIVE_SEARCH_AD','ENABLED','[{"text":"Dentist in TC Palya"}]','[{"text":"Book today"}]','["https://elitesdental.com/"]'),
+         ('ag1','ad2','c1','Search TC Palya','ENABLED','RESPONSIVE_SEARCH_AD','PAUSED','[]','[]','[]');
+  insert into ads_daily_ad (date, ad_group_id, ad_id, campaign_id, impressions, clicks, cost_micros, conversions)
+  values ('2026-10-01','ag1','ad1','c1',100,10,200000000,1), ('2026-10-02','ag1','ad1','c1',50,5,100000000,0),
+         ('2026-09-01','ag1','ad2','c1',30,1,10000000,0);
+  insert into ads_daily_keyword (date, ad_group_id, criterion_id, keyword, match_type, impressions, clicks, cost_micros, conversions)
+  values ('2026-10-01','ag1','k1','dentist near me','PHRASE',80,8,150000000,1);
+  insert into ads_daily_search_term (date, campaign_id, ad_group_id, search_term, impressions, clicks, cost_micros, conversions, match_types)
+  values ('2026-10-01','c1','ag1','dentist near me tc palya',40,4,80000000,1,'NEAR_PHRASE');
+`);
+await as("stranger@x.com", async () => {
+  const r = await db.query("select count(*)::int n from rpc_ads_ad_library('2026-01-01','2026-12-31')");
+  assert.equal(r.rows[0].n, 0, "stranger must not read ads");
+});
+await as("viewer@x.com", async () => {
+  const lib = await db.query("select * from rpc_ads_ad_library('2026-10-01','2026-10-31')");
+  assert.equal(lib.rows.length, 2, "ads with no rows in range still listed");
+  const a1 = lib.rows.find((r) => r.ad_id === "ad1");
+  assert.equal(Number(a1.impressions), 150); assert.equal(Number(a1.clicks), 15); assert.equal(Number(a1.cost), 300);
+  assert.equal(a1.has_rows, true); assert.equal(new Date(a1.last_served).toISOString().slice(0, 10), "2026-10-02");
+  const a2 = lib.rows.find((r) => r.ad_id === "ad2");
+  assert.equal(a2.has_rows, false, "no data in range is flagged, not faked");
+  assert.ok(a2.last_served, "lifetime last-served date kept");
+  const t = (await db.query("select rpc_ads_terms_for('2026-10-01','2026-10-31','c1') j")).rows[0].j;
+  assert.equal(t.keywords.length, 1); assert.equal(t.terms.length, 1);
+  assert.equal(t.terms[0].match_types, "NEAR_PHRASE");
+});
+
 // Cron jobs registered
 const jobs = await db.query("select name from cron.job order by name");
 assert.equal(jobs.rows.length, 7);
