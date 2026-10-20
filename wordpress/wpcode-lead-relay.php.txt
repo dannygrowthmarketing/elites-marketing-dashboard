@@ -54,11 +54,23 @@ function edc_attr_from( $raw ) {
 add_action( 'elementor_pro/forms/new_record', function ( $record, $handler ) {
 	$fields = array();
 	foreach ( (array) $record->get( 'fields' ) as $id => $f ) {
-		$fields[ $id ] = isset( $f['value'] ) ? $f['value'] : '';
+		$fields[ $id ] = array(
+			'value' => isset( $f['value'] ) ? (string) $f['value'] : '',
+			'type'  => isset( $f['type'] ) ? (string) $f['type'] : '',
+			'title' => isset( $f['title'] ) ? (string) $f['title'] : '',
+		);
 	}
-	$find = function ( array $keys ) use ( $fields ) {
-		foreach ( $fields as $id => $v ) {
-			foreach ( $keys as $k ) { if ( stripos( $id, $k ) !== false && '' !== $v ) { return sanitize_text_field( $v ); } }
+	// Match by field type first (tel/email), then by field ID or label. Works even when
+	// Elementor gives a field a random ID such as field_37af932.
+	$find = function ( array $keys, array $types = array() ) use ( $fields ) {
+		foreach ( $fields as $id => $f ) {
+			if ( '' !== $f['value'] && $types && in_array( $f['type'], $types, true ) ) { return sanitize_text_field( $f['value'] ); }
+		}
+		foreach ( $fields as $id => $f ) {
+			if ( '' === $f['value'] ) { continue; }
+			foreach ( $keys as $k ) {
+				if ( stripos( $id, $k ) !== false || stripos( $f['title'], $k ) !== false ) { return sanitize_text_field( $f['value'] ); }
+			}
 		}
 		return '';
 	};
@@ -71,8 +83,8 @@ add_action( 'elementor_pro/forms/new_record', function ( $record, $handler ) {
 		'external_ref' => 'elementor-' . md5( wp_json_encode( $fields ) . microtime() ),
 		'occurred_at'  => gmdate( 'c' ),
 		'name'         => $find( array( 'name' ) ),
-		'phone'        => $find( array( 'whatsapp', 'phone', 'mobile', 'tel' ) ),
-		'email'        => $find( array( 'email' ) ),
+		'phone'        => $find( array( 'whatsapp', 'phone', 'mobile' ), array( 'tel' ) ),
+		'email'        => $find( array( 'email' ), array( 'email' ) ),
 		'service'      => $find( array( 'concern', 'service', 'treatment' ) ),
 		'form_name'    => $form_name,
 		'consent'      => '' !== $find( array( 'consent' ) ),
