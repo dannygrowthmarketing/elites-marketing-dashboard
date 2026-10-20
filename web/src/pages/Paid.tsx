@@ -1,11 +1,30 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router-dom";
+import AdLibrary from "./AdLibrary";
 import { DataTable, Drawer, Kpi, KpiRow, Page, Pending, Section, Tag, TrendChart, useRangeArgs } from "../components/ui";
 import { useFilters, useRpc, useTable } from "../state";
 import { costPer, cpc, cpm, ctr, convRate, ratio } from "../lib/metrics";
 import { shortPath } from "../lib/insights";
 import { C, totals, useSeries } from "./Overview";
 
+export function PaidTabs({ tab, setTab }: { tab: string; setTab: (t: string) => void }) {
+  return (
+    <div className="page-tabs" role="tablist" aria-label="Paid ads views">
+      <button role="tab" aria-selected={tab === "performance"} className={tab === "performance" ? "on" : ""} onClick={() => setTab("performance")}>Performance</button>
+      <button role="tab" aria-selected={tab === "ads"} className={tab === "ads" ? "on" : ""} onClick={() => setTab("ads")}>Ad Library</button>
+    </div>
+  );
+}
+
 export default function Paid() {
+  const [params, setParams] = useSearchParams();
+  const tab = params.get("tab") === "ads" ? "ads" : "performance";
+  const setTab = (t: string) => setParams(t === "performance" ? {} : { tab: t }, { replace: true });
+  if (tab === "ads") return <AdLibrary tabs={<PaidTabs tab={tab} setTab={setTab} />} />;
+  return <PaidPerformance tabs={<PaidTabs tab={tab} setTab={setTab} />} />;
+}
+
+function PaidPerformance({ tabs }: { tabs: ReactNode }) {
   const f = useFilters();
   const { range } = useRangeArgs();
   const { cur, prev } = useSeries();
@@ -32,6 +51,7 @@ export default function Paid() {
   return (
     <Page eyebrow="Paid media" title="Paid advertising"
       intro="Google Ads account 520-119-6364 (INR, Asia/Kolkata). Conversions here are Google's attribution and include phone, WhatsApp and directions taps — compare with CRM bookings on the Attribution page.">
+      {tabs}
       {t.ads_cost == null && <Pending source="Google Ads">{ads?.status === "pending_approval"
         ? "The Google Ads API needs a developer token with Basic access. Apply from the Ads account's API Center; until approved, nothing is imported here."
         : undefined}</Pending>}

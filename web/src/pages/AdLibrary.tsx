@@ -6,7 +6,7 @@ import { costPer, cpc, ctr, convRate, fmt } from "../lib/metrics";
 import { ACCOUNT, STATUS_LABEL, STATUS_TONE, assetsFor, combo, domainOf, lc, metricsOf, num, statusOf, type AdRow, type Asset, type Status, type TextAsset } from "../lib/adlib";
 
 /* ---------------- page ---------------- */
-export default function AdLibrary() {
+export default function AdLibrary({ tabs }: { tabs?: ReactNode }) {
   const f = useFilters();
   const [scope, setScope] = useState<"all" | "dashboard">("all");
   const range = scope === "all" ? { start: "2019-02-01", end: f.today } : f.range;
@@ -59,12 +59,14 @@ export default function AdLibrary() {
   const ga = integ.data?.[0];
 
   if (ga && ga.status !== "connected" && !rows.length) {
-    return <Page eyebrow="Paid media" title="Google Ads Visual Ad Library"><Pending source="Google Ads" /></Page>;
+    return <Page eyebrow="Paid media" title="Paid advertising">{tabs}<Pending source="Google Ads" /></Page>;
   }
 
   return (
-    <Page eyebrow="Paid media" title="Google Ads Visual Ad Library"
-      intro={<>The actual ad text and assets from Google Ads account {ACCOUNT}, with each ad's results. Previews are <strong>rebuilt from the stored ad text and assets</strong>; they aren't screenshots, and what each searcher saw varied with device, position and which headlines Google chose.</>}>
+    <Page eyebrow="Paid media" title="Paid advertising"
+      >
+      {tabs}
+      <p className="intro adlib-lede"><strong>Google Ads Visual Ad Library.</strong> The actual ad text and assets from Google Ads account {ACCOUNT}, with each ad's results. Previews are <strong>rebuilt from the stored ad text and assets</strong>; they aren't screenshots, and what each searcher saw varied with device, position and which headlines Google chose.</p>
 
       <Section n="01" title="Status" note={ads.data ? undefined : "Loading ads…"}>
         <div className={`adlib-banner ${running ? "live" : "hist"}`}>
@@ -399,7 +401,7 @@ function AdDetail({ ad, assets, range, today }: { ad: AdRow; assets: Asset[]; ra
         <h5>Search terms</h5>
         <DataTable rows={(t.terms ?? []).map((k: any) => ({ ...k, impressions: num(k.impressions), clicks: num(k.clicks), cost: num(k.cost), conversions: num(k.conversions) }))}
           csvName={`search-terms-${ad.ad_group_id}`} limit={15} empty="No search terms reported in this period." initialSort={{ key: "cost", dir: -1 }} cols={[
-          { key: "search_term", label: "Search term" }, { key: "match_types", label: "Matched as", render: (r) => r.match_types ? lc(r.match_types).replace(/,/g, ", ") : "—" },
+          { key: "search_term", label: "Search term" }, { key: "match_types", label: "Matched as", value: (r) => matchLabel(r.match_types), render: (r) => matchLabel(r.match_types) },
           { key: "impressions", label: "Impr.", align: "right", format: "int" }, { key: "clicks", label: "Clicks", align: "right", format: "int" },
           { key: "ctr", label: "CTR", align: "right", format: "pct", value: (r) => ctr(r.clicks, r.impressions) },
           { key: "cost", label: "Spend", align: "right", format: "inr" }, { key: "conversions", label: "Conv.", align: "right", format: "dec" },
@@ -413,6 +415,12 @@ function AdDetail({ ad, assets, range, today }: { ad: AdRow; assets: Asset[]; ra
       </>}
     </div>
   );
+}
+
+const MATCH: Record<string, string> = { EXACT: "exact", NEAR_EXACT: "exact (close variant)", PHRASE: "phrase", NEAR_PHRASE: "phrase (close variant)", BROAD: "broad" };
+function matchLabel(s: string | null | undefined) {
+  if (!s) return "—";
+  return [...new Set(s.split(",").map((x) => x.trim()).filter(Boolean))].map((x) => MATCH[x] ?? lc(x)).join(", ");
 }
 
 function TextList({ title, items, limit }: { title: string; items: TextAsset[] | null; limit: number }) {

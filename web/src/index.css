@@ -281,3 +281,11 @@ tr.click { cursor: pointer; } tr.click:hover td { background: var(--hover); }
   .adlib-card-body, .adlib-previews { grid-template-columns: 1fr; }
   .gad-sl-d { grid-template-columns: 1fr; }
 }
+/* page tabs */
+.page-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--rule); margin: 6px 0 4px; overflow-x: auto; }
+.page-tabs button { font: inherit; font-weight: 600; font-size: 14px; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); padding: 10px 14px; cursor: pointer; white-space: nowrap; margin-bottom: -1px; }
+.page-tabs button.on { color: var(--navy); border-bottom-color: var(--gold); }
+.page-tabs button:hover { color: var(--ink); }
+.adlib-lede { margin: 14px 0 0; }
+.gad-sl-m { scrollbar-width: none; }
+.gad-sl-m::-webkit-scrollbar { display: none; }

@@ -124,7 +124,16 @@ export async function syncAds(db: SupabaseClient, customerIdRaw: string, start: 
   // Creatives and assets are current-state snapshots: refresh them on syncs that reach the last week,
   // not on every historical backfill chunk.
   const weekAgo = new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10);
-  if (end >= weekAgo) count += await syncAdCreatives(db, cid, token);
+  if (end >= weekAgo) {
+    try { count += await syncAdCreatives(db, cid, token); }
+    catch (e) {
+      if (e instanceof PendingApproval || e instanceof NotAuthorized) throw e;
+      // Never let the Ad Library break the core spend/click sync.
+      await db.from("settings").upsert({ key: "ads_library_sync", value: {
+        synced_at: new Date().toISOString(), ads: 0, assets: 0,
+        warnings: [`Ad creatives could not be imported: ${(e instanceof Error ? e.message : String(e)).slice(0, 300)}`] } });
+    }
+  }
 
   return count;
 }
@@ -214,6 +223,15 @@ export async function syncAdCreatives(db: SupabaseClient, cid: string, token: st
     x.descriptions = [e.description, e.description2].filter(Boolean).map((t: string, i: number) => ({ text: t, pinned: `DESCRIPTION_${i + 1}`, label: null, approval: null }));
     x.path1 = e.path1 ?? x.path1; x.path2 = e.path2 ?? x.path2;
   }
+  // Smart campaign ads keep their text in a separate field.
+  const smart = await tryGaql(cid, token, "smart campaign ad fields", `SELECT ad_group.id, ad_group_ad.ad.id,
+    ad_group_ad.ad.smart_campaign_ad.headlines, ad_group_ad.ad.smart_campaign_ad.descriptions
+    FROM ad_group_ad WHERE ad_group_ad.ad.type = 'SMART_CAMPAIGN_AD'`, warnings);
+  for (const r of smart ?? []) {
+    const x = ads.get(`${r.adGroup.id}|${r.adGroupAd.ad.id}`); const s = r.adGroupAd.ad.smartCampaignAd ?? {};
+    if (!x) continue;
+    x.headlines = textAssets(s.headlines); x.descriptions = textAssets(s.descriptions);
+  }
   count += await upsertBatched(db, "ads_ads", [...ads.values()], "ad_group_id,ad_id");
 
   // 3) Linked assets at account, campaign and ad group level.
@@ -269,7 +287,8 @@ export async function syncAdCreatives(db: SupabaseClient, cid: string, token: st
     }
   }
   // Snapshot replace: drop links that no longer exist, only after a successful fetch of all levels.
-  count += await upsertBatched(db, "ads_assets", assetRows, "level,owner_id,asset_id,field_type");
+  const dedup = [...new Map(assetRows.map((r) => [`${r.level}|${r.owner_id}|${r.asset_id}|${r.field_type}`, r])).values()];
+  count += await upsertBatched(db, "ads_assets", dedup, "level,owner_id,asset_id,field_type");
   if (levelsOk) await db.from("ads_assets").delete().lt("synced_at", syncStart);
 
   await db.from("settings").upsert({ key: "ads_library_sync", value: { synced_at: syncStart, ads: ads.size, assets: assetRows.length, warnings } });
