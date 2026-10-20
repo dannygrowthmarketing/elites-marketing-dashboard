@@ -1,0 +1,13 @@
+# Each function does its own auth (user JWT + app_users role, cron secret, or HMAC),
+# so the gateway JWT check is off. google-oauth must accept Google's redirect without a JWT.
+[functions.sync]
+verify_jwt = false
+
+[functions.google-oauth]
+verify_jwt = false
+
+[functions.credentials]
+verify_jwt = false
+
+[functions.lead-ingest]
+verify_jwt = false
