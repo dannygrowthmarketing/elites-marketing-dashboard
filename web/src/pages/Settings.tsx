@@ -23,9 +23,10 @@ export default function Settings() {
         ]} />
         {isOwner && <form className="inline-form" onSubmit={async (e) => {
           e.preventDefault(); setErr(null);
-          const d = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
+          const form = e.currentTarget; // React clears currentTarget after the await below
+          const d = Object.fromEntries(new FormData(form)) as Record<string, string>;
           const { error } = await supabase.from("app_users").upsert({ email: d.email.trim().toLowerCase(), role: d.role });
-          if (error) setErr(error.message); else { e.currentTarget.reset(); setV((x) => x + 1); }
+          if (error) setErr(error.message); else { form.reset(); setV((x) => x + 1); }
         }}>
           <input name="email" type="email" required placeholder="name@example.com" />
           <select name="role" defaultValue="viewer"><option value="viewer">viewer</option><option value="editor">editor</option><option value="owner">owner</option></select>

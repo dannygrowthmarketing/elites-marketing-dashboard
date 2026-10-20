@@ -51,7 +51,7 @@ export default function Crm() {
         </div>
       </Section>
       <Section n="02" title="Leads">
-        <DataTable rows={leads.data ? rows : null} csvName="crm-leads" onRow={(r) => setOpen(r.id)} limit={50} empty="No leads in this period. Website leads appear once the WordPress snippet is live." cols={[
+        <DataTable rows={leads.data ? rows : null} csvName="crm-leads" onRow={(r) => setOpen(r.id)} limit={50} empty="No leads in this period. Website form enquiries and bookings arrive here automatically." cols={[
           { key: "first_inquiry_at", label: "First enquiry", render: (r) => new Date(r.first_inquiry_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }), value: (r) => r.first_inquiry_at },
           { key: "name", label: "Name", render: (r) => <>{r.name ?? <span className="muted">—</span>} {r.is_test && <Tag>test</Tag>}</>, value: (r) => r.name },
           { key: "phone_e164", label: "Phone" },
@@ -189,7 +189,7 @@ function LeadDetail({ id, canEdit, onChanged }: { id: string; canEdit: boolean; 
       ]} />
 
       <h5>Notes</h5>
-      {canEdit && <form className="inline-form" onSubmit={async (e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); const body = String(fd.get("body") ?? "").trim(); if (!body) return; const { data: s } = await supabase.auth.getUser(); await supabase.from("lead_notes").insert({ lead_id: id, body, author: s.user?.email }); e.currentTarget.reset(); bump(); }}>
+      {canEdit && <form className="inline-form" onSubmit={async (e) => { e.preventDefault(); const form = e.currentTarget; const fd = new FormData(form); const body = String(fd.get("body") ?? "").trim(); if (!body) return; const { data: s } = await supabase.auth.getUser(); await supabase.from("lead_notes").insert({ lead_id: id, body, author: s.user?.email }); form.reset(); bump(); }}>
         <input name="body" placeholder="Follow-up note (no clinical details)" /><button className="btn">Add</button>
       </form>}
       {(notes.data ?? []).map((n) => <div key={n.id} className="note"><div>{n.body}</div><div className="muted small">{n.author} · {new Date(n.created_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</div></div>)}
@@ -201,9 +201,10 @@ function AddAppt({ leadId, onDone }: { leadId: string; onDone: () => void }) {
   return (
     <form className="inline-form" onSubmit={async (e) => {
       e.preventDefault();
-      const d = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
+      const form = e.currentTarget;
+      const d = Object.fromEntries(new FormData(form)) as Record<string, string>;
       await supabase.from("appointments").insert({ lead_id: leadId, appointment_at: d.at ? new Date(d.at).toISOString() : null, source_system: "manual", service_category: d.svc || null });
-      e.currentTarget.reset(); onDone();
+      form.reset(); onDone();
     }}>
       <input name="at" type="datetime-local" aria-label="Appointment time" />
       <select name="svc" defaultValue=""><option value="">Service…</option>{SERVICES.map((s) => <option key={s}>{s}</option>)}</select>
@@ -216,12 +217,13 @@ function AddRevenue({ leadId, appts, onDone }: { leadId: string; appts: any[]; o
   return (
     <form className="inline-form" onSubmit={async (e) => {
       e.preventDefault();
-      const d = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
+      const form = e.currentTarget;
+      const d = Object.fromEntries(new FormData(form)) as Record<string, string>;
       const amt = Number(d.amt);
       if (!Number.isFinite(amt) || amt < 0) return;
       const { data: s } = await supabase.auth.getUser();
       await supabase.from("revenue_entries").insert({ lead_id: leadId, appointment_id: appts.at(-1)?.id ?? null, collected_on: d.on, amount_inr: amt, service_category: d.svc || null, entered_by: s.user?.email });
-      e.currentTarget.reset(); onDone();
+      form.reset(); onDone();
     }}>
       <input name="on" type="date" required aria-label="Collected on" defaultValue={new Date().toISOString().slice(0, 10)} />
       <input name="amt" type="number" min="0" step="1" required placeholder="₹ amount" />
