@@ -3,8 +3,9 @@ import { admin, fetchRetry, todayLocal, upsertBatched } from "../util.ts";
 import { NotAuthorized } from "../google.ts";
 
 // Clarity Data Export API: last 1–3 days only, 10 requests/project/day.
-// We take one snapshot per dimension per day (window = 1 day) => 4 calls/day.
-const DIMENSIONS = [null, "Device", "Browser", "URL"];
+// We take one snapshot per dimension per day (window = 1 day) => 3 calls/day.
+// Every call needs dimension1 (a call without it returns 400). Totals = sum over Device.
+const DIMENSIONS: (string | null)[] = ["Device", "Channel", "URL"];
 
 export async function syncClarity(db: SupabaseClient): Promise<number> {
   const { data } = await admin().rpc("svc_get_credential", { p_provider: "clarity" });
