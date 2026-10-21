@@ -11,13 +11,17 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
+    "papaparse": "^5.4.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.4",
-    "recharts": "^3.10.1"
+    "read-excel-file": "^5.8.6",
+    "recharts": "^3.10.1",
+    "write-excel-file": "^2.0.10"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "@types/papaparse": "^5.3.14",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",

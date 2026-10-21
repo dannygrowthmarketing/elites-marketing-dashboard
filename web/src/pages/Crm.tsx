@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { DataTable, Drawer, Kpi, KpiRow, Page, Section, Tag } from "../components/ui";
 import { useFilters, useTable } from "../state";
 import { supabase } from "../lib/supabase";
@@ -16,7 +17,8 @@ export default function Crm() {
   const canEdit = f.role === "owner" || f.role === "editor";
   const [status, setStatus] = useState("all");
   const [showTest, setShowTest] = useState(false);
-  const [open, setOpen] = useState<string | null>(null);
+  const [sp] = useSearchParams();
+  const [open, setOpen] = useState<string | null>(sp.get("lead"));
   const [adding, setAdding] = useState(false);
   const leads = useTable<any>("leads", (q) => {
     let x = q.select("*").gte("first_inquiry_at", f.range.start + "T00:00:00+05:30").lte("first_inquiry_at", f.range.end + "T23:59:59+05:30").order("first_inquiry_at", { ascending: false }).limit(2000);

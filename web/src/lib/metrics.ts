@@ -107,6 +107,7 @@ export const DEFINITIONS: Definition[] = [
   { key: "clarity_rage", name: "Sessions with rage clicks", source: "Microsoft Clarity", formula: "Share of sessions where someone clicked the same spot rapidly — a sign of frustration" },
   { key: "clarity_dead", name: "Sessions with dead clicks", source: "Microsoft Clarity", formula: "Share of sessions with clicks on something that didn't respond" },
   { key: "clarity_quickback", name: "Sessions with quick-backs", source: "Microsoft Clarity", formula: "Share of sessions where a visitor opened a page and came straight back" },
+  { key: "rev_traced", name: "Revenue traced to a lead", source: "Revenue + CRM", formula: "Revenue from payments matched to a CRM lead ÷ all revenue", notes: "Payments are matched by patient phone, then email, when they are added. The rest use the source the clinic typed in, or Not recorded." },
   { key: "website_conversion_rate", name: "Website conversion rate", source: "GA4", formula: "Confirmed bookings (appointment_confirmed events) ÷ sessions" },
 ];
 

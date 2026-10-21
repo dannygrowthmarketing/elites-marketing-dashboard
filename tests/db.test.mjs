@@ -181,6 +181,45 @@ await as("viewer@x.com", async () => {
   assert.equal(t.terms[0].match_types, "NEAR_PHRASE");
 });
 
+// Revenue: import, lead matching, duplicates, undo, permissions.
+await db.exec(`update leads set phone_e164 = '+919845012345', email = 'a@x.com' where id = '11111111-1111-1111-1111-111111111111';`);
+await as("viewer@x.com", async () => {
+  let blocked = false;
+  try { await db.query(`select rpc_revenue_import('[{"date":"2026-10-05","amount":100}]'::jsonb, 'f.xlsx', 'bulk')`); } catch { blocked = true; }
+  assert.ok(blocked, "viewer must not import revenue");
+});
+await as("owner@x.com", async () => {
+  const rows = JSON.stringify([
+    { date: "2026-10-05", amount: "12000", invoice: "INV-1", service: "Implants", phone: "98450 12345", patient_type: "New" },
+    { date: "2026-10-06", amount: 800, invoice: "INV-2", email: "A@X.com" },
+    { date: "2026-10-07", amount: 1500, invoice: "INV-3", channel: "Walk-in", patient_type: "existing" },
+    { date: "", amount: 50 },
+    { date: "2026-10-08", amount: 99, invoice: "inv-1" },
+  ]);
+  const r = (await db.query(`select rpc_revenue_import($1::jsonb, 'oct.xlsx', 'bulk') j`, [rows])).rows[0].j;
+  assert.equal(r.inserted, 3); assert.equal(r.skipped, 2); assert.equal(r.matched, 2); assert.equal(Number(r.total), 14300);
+  assert.match(r.skipped_rows[1].reason, /already added/, "invoice numbers are case-insensitive duplicates");
+  const m = await db.query("select invoice_ref, match_method, patient_type from revenue_entries where batch_id = $1 order by invoice_ref", [r.batch_id]);
+  assert.deepEqual(m.rows.map((x) => [x.invoice_ref, x.match_method, x.patient_type]),
+    [["INV-1", "phone", "new"], ["INV-2", "email", null], ["INV-3", "none", "returning"]]);
+
+  const s = (await db.query("select rpc_revenue_summary('2026-10-01','2026-10-31') j")).rows[0].j;
+  assert.equal(Number(s.total), 4500 + 14300, "existing CRM entry + import, test-lead revenue excluded");
+  assert.equal(Number(s.google_ads_revenue), 4500 + 12000 + 800, "matched to google/cpc lead");
+  assert.equal(Number(s.google_ads_spend), 750);
+  assert.equal(s.by_channel.find((c) => c.channel === "Walk-in").revenue, 1500);
+  assert.equal(s.by_month.length, 12);
+  assert.equal(Number(s.by_month[11].revenue), 18800);
+
+  const single = (await db.query(`select rpc_revenue_import('[{"date":"2026-10-09","amount":500,"lead_id":"22222222-2222-2222-2222-222222222222"}]'::jsonb, null, 'single') j`)).rows[0].j;
+  assert.equal(single.inserted, 1); assert.equal(single.batch_id, null);
+
+  const undone = (await db.query("select rpc_revenue_undo_batch($1) n", [r.batch_id])).rows[0].n;
+  assert.equal(undone, 3);
+  assert.equal((await db.query("select count(*)::int n from revenue_batches")).rows[0].n, 0);
+  assert.equal((await db.query("select public.channel_label('google','cpc') a, public.channel_label(null,null) b")).rows[0].a, "Google Ads");
+});
+
 // Cron jobs registered
 const jobs = await db.query("select name from cron.job order by name");
 assert.equal(jobs.rows.length, 7);
