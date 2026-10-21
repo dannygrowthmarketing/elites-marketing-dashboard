@@ -4,6 +4,7 @@ import { useFilters, useRpc, useTable } from "../state";
 import { convRate, fmt, pctChange, ratio, sum } from "../lib/metrics";
 import { shortPath } from "../lib/insights";
 import { C, totals, useSeries } from "./Overview";
+import ClaritySection from "./ClaritySection";
 
 const EVENT_LABEL: Record<string, string> = {
   appointment_confirmed: "Booking confirmed (Click4Appointment)",
@@ -63,8 +64,8 @@ export default function Website() {
   const none = t.ga4_sessions == null;
 
   return (
-    <Page eyebrow="Website" title="Website analytics — GA4"
-      intro="Property 548000513. Lead actions come from the site's own tracking snippets (phone, WhatsApp, directions, book clicks, confirmed bookings, video consult).">
+    <Page eyebrow="Website" title="Website analytics"
+      intro="GA4 property 548000513 for traffic and lead actions; Microsoft Clarity for how visitors behave on the page. Lead actions come from the site's own tracking snippets (phone, WhatsApp, directions, book clicks, confirmed bookings, video consult).">
       {none && integ.data?.[0]?.status !== "connected" && <Pending source="Google Analytics 4" />}
       <Section n="01" title="Traffic">
         <KpiRow>
@@ -129,6 +130,8 @@ export default function Website() {
           { key: "rate", label: "Engagement", align: "right", format: "pct", value: (r) => ratio(r.engaged_sessions, r.sessions) },
         ]} />
       </Section>
+
+      <ClaritySection n="06" />
 
       <Drawer open={!!drill} onClose={() => setDrill(null)} title={drill ? shortPath(drill) : ""}>
         {drill && <LandingDrill page={drill} />}

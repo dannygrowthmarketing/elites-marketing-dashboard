@@ -52,6 +52,11 @@ export const fmt = {
   inr: (n: Num) => (ok(n) ? (Math.abs(n) < 100 ? inr2 : inr0).format(n) : "—"),
   pct: (n: Num, digits = 1) => (ok(n) ? `${(n * 100).toFixed(digits)}%` : "—"),
   x: (n: Num) => (ok(n) ? `${n.toFixed(2)}×` : "—"),
+  secs: (n: Num) => {
+    if (!ok(n)) return "—";
+    const r = Math.round(n);
+    return r < 60 ? `${r}s` : `${Math.floor(r / 60)}m ${String(r % 60).padStart(2, "0")}s`;
+  },
   delta: (n: Num) => (ok(n) ? `${n >= 0 ? "+" : "−"}${Math.abs(n * 100).toFixed(1)}%` : ""),
   // Indian short scale: K (thousand), L (lakh), Cr (crore)
   compact: (n: Num) => {
@@ -96,6 +101,12 @@ export const DEFINITIONS: Definition[] = [
   { key: "cost_per_booking", name: "Cost per booked appointment", source: "Google Ads + CRM", formula: "Channel spend ÷ booked appointments from that channel" },
   { key: "revenue", name: "Revenue", source: "CRM (entered by clinic)", formula: "Sum of collected payments entered against leads", notes: "Only what the clinic records. Blank means not entered, not zero sales." },
   { key: "roas", name: "ROAS", source: "CRM + Ads", formula: "Revenue from channel ÷ channel spend", notes: "Shown as Not available unless both revenue and spend exist for the same channel and period." },
+  { key: "clarity_sessions", name: "Recorded sessions", source: "Microsoft Clarity", formula: "Human sessions Clarity recorded; bot sessions are counted separately and left out", notes: "One snapshot per day, covering the 24 hours before the 08:00 IST sync. History starts 21 Oct 2026; Clarity's API can't return older days." },
+  { key: "clarity_scroll", name: "Average scroll depth", source: "Microsoft Clarity", formula: "How far down the page visitors scrolled, averaged per session", notes: "Clarity's per-segment average, combined across devices weighted by sessions." },
+  { key: "clarity_active", name: "Active time per session", source: "Microsoft Clarity", formula: "Time a visitor was actually interacting (scrolling, clicking, typing), per session", notes: "As reported by Clarity, combined across devices weighted by sessions. Time with the tab open but idle is not counted." },
+  { key: "clarity_rage", name: "Sessions with rage clicks", source: "Microsoft Clarity", formula: "Share of sessions where someone clicked the same spot rapidly — a sign of frustration" },
+  { key: "clarity_dead", name: "Sessions with dead clicks", source: "Microsoft Clarity", formula: "Share of sessions with clicks on something that didn't respond" },
+  { key: "clarity_quickback", name: "Sessions with quick-backs", source: "Microsoft Clarity", formula: "Share of sessions where a visitor opened a page and came straight back" },
   { key: "website_conversion_rate", name: "Website conversion rate", source: "GA4", formula: "Confirmed bookings (appointment_confirmed events) ÷ sessions" },
 ];
 

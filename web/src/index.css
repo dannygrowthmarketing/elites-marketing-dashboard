@@ -289,3 +289,10 @@ tr.click { cursor: pointer; } tr.click:hover td { background: var(--hover); }
 .adlib-lede { margin: 14px 0 0; }
 .gad-sl-m { scrollbar-width: none; }
 .gad-sl-m::-webkit-scrollbar { display: none; }
+
+/* Clarity: devices + channels side by side */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 760px) { .two-col { grid-template-columns: 1fr; } }
+.sub-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.inline-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted, #8a97ab); cursor: pointer; }
+.inline-toggle input { width: 16px; height: 16px; margin: 0; padding: 0; accent-color: var(--gold, #C9A84C); }
