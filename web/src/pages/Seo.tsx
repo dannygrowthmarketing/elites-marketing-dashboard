@@ -1,11 +1,32 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Aeo, Geo } from "./SeoAnswer";
 import { DataTable, DeltaCell, Drawer, Kpi, KpiRow, Page, Pending, Section, Tag, TrendChart, useRangeArgs } from "../components/ui";
 import { useFilters, useRpc, useTable } from "../state";
 import { ctr, fmt, pctChange } from "../lib/metrics";
 import { expectedCtr, shortPath } from "../lib/insights";
 import { C, totals, useSeries } from "./Overview";
 
+export function SeoTabs({ tab, setTab }: { tab: string; setTab: (t: string) => void }) {
+  const T = [["search", "Search (SEO)"], ["aeo", "Answer engines (AEO)"], ["geo", "AI search (GEO)"]];
+  return (
+    <div className="page-tabs" role="tablist" aria-label="Search views">
+      {T.map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>)}
+    </div>
+  );
+}
+
 export default function Seo() {
+  const [params, setParams] = useSearchParams();
+  const tab = ["aeo", "geo"].includes(params.get("tab") ?? "") ? params.get("tab")! : "search";
+  const setTab = (t: string) => setParams(t === "search" ? {} : { tab: t }, { replace: true });
+  const tabs = <SeoTabs tab={tab} setTab={setTab} />;
+  if (tab === "aeo") return <Aeo tabs={tabs} />;
+  if (tab === "geo") return <Geo tabs={tabs} />;
+  return <SeoSearch tabs={tabs} />;
+}
+
+function SeoSearch({ tabs }: { tabs: ReactNode }) {
   const f = useFilters();
   const { cmp } = useRangeArgs();
   const { cur, prev } = useSeries();
@@ -34,6 +55,7 @@ export default function Seo() {
   return (
     <Page eyebrow="Organic" title="SEO — Google Search Console"
       intro="Property https://elitesdental.com/ (URL-prefix). Data runs 2–3 days behind. Average position is impression-weighted and moves with device, location and personalisation — it is not a guaranteed rank.">
+      {tabs}
       {notConnected && <Pending source="Search Console" />}
       <Section n="01" title="Search performance">
         <KpiRow>

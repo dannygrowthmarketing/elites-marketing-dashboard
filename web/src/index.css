@@ -282,7 +282,8 @@ tr.click { cursor: pointer; } tr.click:hover td { background: var(--hover); }
   .gad-sl-d { grid-template-columns: 1fr; }
 }
 /* page tabs */
-.page-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--rule); margin: 6px 0 4px; overflow-x: auto; }
+.page-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--rule); margin: 6px 0 4px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.page-tabs::-webkit-scrollbar { display: none; }
 .page-tabs button { font: inherit; font-weight: 600; font-size: 14px; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); padding: 10px 14px; cursor: pointer; white-space: nowrap; margin-bottom: -1px; }
 .page-tabs button.on { color: var(--navy); border-bottom-color: var(--gold); }
 .page-tabs button:hover { color: var(--ink); }
@@ -312,3 +313,24 @@ tr.click { cursor: pointer; } tr.click:hover td { background: var(--hover); }
 .btn.sm { min-height: 28px; padding: 3px 10px; font-size: 12.5px; }
 .btn.danger { color: var(--bad); border-color: var(--bad); }
 label.btn { cursor: pointer; }
+
+/* Partnerships */
+.score-pill { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; font-weight: 600; }
+.score-pill .track { display: inline-block; width: 44px; height: 6px; border-radius: 3px; background: var(--rule); overflow: hidden; }
+.score-pill .track i { display: block; height: 100%; background: var(--gold); }
+.kvtable { width: 100%; border-collapse: collapse; margin: 6px 0 10px; }
+.kvtable th, .kvtable td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; font-size: 13px; }
+.kvtable th { color: var(--muted); font-weight: 500; width: 38%; }
+.kvtable thead th { width: auto; }
+.score-parts { display: grid; gap: 10px; }
+.score-part .row { display: flex; justify-content: space-between; font-size: 13.5px; }
+.score-part .bar { height: 6px; background: var(--rule); border-radius: 3px; overflow: hidden; margin: 4px 0; }
+.score-part .bar i { display: block; height: 100%; background: var(--navy); }
+.score-rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-bottom: 10px; }
+.src-card { margin-bottom: 10px; }
+.src-card .row { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.attribution { margin-top: 6px; }
+.linkish { background: none; border: 0; padding: 0; color: var(--info); cursor: pointer; font: inherit; text-align: left; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; overflow-wrap: anywhere; }
+.form textarea { font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: 6px 9px; }
+.sitecheck-bar { margin-bottom: 10px; }

@@ -220,10 +220,62 @@ await as("owner@x.com", async () => {
   assert.equal((await db.query("select public.channel_label('google','cpc') a, public.channel_label(null,null) b")).rows[0].a, "Google Ads");
 });
 
+// Partnerships agent: audit, dedupe, chains, scoring, re-runs, review fields.
+{
+  const run = { source_key: "overture_places", release: "2026-09-23.1", params: { center_lat: 13.02312, center_lon: 77.695679, radius_km: 2, min_confidence: 0.6 } };
+  const P = (id, name, category, dlat, extra = {}) => ({ source_id: id, name, category, lat: 13.02312 + dlat, lon: 77.695679, confidence: 0.9,
+    websites: ["https://x.example"], phones: ["+91 80 1234 5678"], records: [{ dataset: "meta", record_id: "r" + id, update_time: "2026-09-01" }], ...extra });
+  const rows = [
+    P("a", "Bright Future School", "school", 0.004),                 // ~0.45 km
+    P("b", "Bright Future School", "school", 0.0045, { confidence: 0.7 }), // duplicate within 150 m, lower confidence
+    P("c", "MedPlus Pharmacy TC Palya", "pharmacy", 0.01),
+    P("d", "MedPlus Ramamurthy", "pharmacy", 0.012),
+    P("e", "Medplus Hoodi", "pharmacy", 0.014, { phones: [], websites: [] }),
+    P("f", "Smile Dental Studio", "doctors_office", 0.003),          // competitor
+    P("g", "Far Away Gym", "gym", 0.05),                             // ~5.5 km, outside radius
+    P("h", "Shaky Listing Gym", "gym", 0.002, { confidence: 0.3 }),
+    P("i", "Tasty Restaurant", "restaurant", 0.001),
+  ];
+  const r1 = (await db.query("select partner_ingest($1::jsonb, $2::jsonb) j", [JSON.stringify(run), JSON.stringify(rows)])).rows[0].j;
+  assert.equal(r1.fetched, 9); assert.equal(r1.kept, 4); assert.equal(r1.new, 4);
+  assert.deepEqual(r1.excluded, { "duplicate listing": 1, "dental practice (competitor)": 1, "outside radius": 1, "low source confidence": 1, "not a partner category": 1 });
+  const school = (await db.query("select * from partner_opportunities where source_id = 'a'")).rows[0];
+  assert.equal(school.score, 35 + 25 + 20 + 9 + 10, "fit + proximity + contact + confidence + independent");
+  assert.equal(school.score_breakdown.length, 5);
+  const med = (await db.query("select score, is_chain, flags from partner_opportunities where source_id = 'e'")).rows[0];
+  assert.equal(med.is_chain, true, "3 MedPlus listings = chain");
+  assert.ok(med.flags.includes("no public contact"));
+  await as("viewer@x.com", async () => {
+    assert.equal((await db.query("select count(*)::int n from partner_opportunities")).rows[0].n, 4);
+    let blocked = false;
+    try { await db.query(`select partner_ingest('{}'::jsonb, '[]'::jsonb)`); } catch { blocked = true; }
+    assert.ok(blocked, "users can't call the ingest directly");
+    const u = await db.query("update partner_opportunities set status = 'shortlisted' where source_id = 'a' returning id");
+    assert.equal(u.rows.length, 0, "viewer can't review");
+  });
+  await as("owner@x.com", async () => {
+    await db.query("update partner_opportunities set status = 'shortlisted', notes = 'Principal open to a camp' where source_id = 'a'");
+    let blocked = false;
+    try { await db.query("update partner_opportunities set score = 100 where source_id = 'a'"); } catch { blocked = true; }
+    assert.ok(blocked, "editors can't change scores");
+  });
+  // Second run: school a still there, c gone.
+  const r2 = (await db.query("select partner_ingest($1::jsonb, $2::jsonb) j", [JSON.stringify(run), JSON.stringify(rows.filter((x) => x.source_id !== "c"))])).rows[0].j;
+  assert.equal(r2.new, 0); assert.equal(r2.updated, 3); assert.equal(r2.inactive, 1);
+  const a2 = (await db.query("select status, notes, active from partner_opportunities where source_id = 'a'")).rows[0];
+  assert.equal(a2.status, "shortlisted", "agent never overwrites review status"); assert.equal(a2.notes, "Principal open to a camp");
+  assert.equal((await db.query("select active from partner_opportunities where source_id = 'c'")).rows[0].active, false);
+  const runs = (await db.query("select status, fetched, in_scope from partner_runs order by started_at")).rows;
+  assert.equal(runs.length, 2); assert.equal(runs[1].status, "success");
+  let rejected = false;
+  try { await db.query("select partner_ingest($1::jsonb, '[]'::jsonb)", [JSON.stringify({ ...run, source_key: "osm_overpass_public" })]); } catch { rejected = true; }
+  assert.ok(rejected, "rejected sources can't be ingested");
+}
+
 // Cron jobs registered
 const jobs = await db.query("select name from cron.job order by name");
 assert.equal(jobs.rows.length, 7);
-const cr = await db.query("select count(*)::int n from private.credentials where provider in ('cron','lead_webhook') and length(api_token)=64");
-assert.equal(cr.rows[0].n, 2);
+const cr = await db.query("select count(*)::int n from private.credentials where provider in ('cron','lead_webhook','partner_ingest') and length(api_token)=64");
+assert.equal(cr.rows[0].n, 3);
 
 console.log("\nDB tests passed");
