@@ -25,7 +25,9 @@ export async function syncClarity(db: SupabaseClient): Promise<number> {
     const body = await r.json();
     for (const metric of body ?? []) {
       for (const info of metric.information ?? []) {
-        const dval = dim ? String(info[dim] ?? "(unknown)") : "ALL";
+        // Field casing differs from the parameter (dimension1=URL returns "Url").
+        const key = dim ? Object.keys(info).find((k) => k.toLowerCase() === dim.toLowerCase()) : undefined;
+        const dval = dim ? String((key && info[key]) ?? "(unknown)") : "ALL";
         rows.push({
           captured_on: today, window_days: 1, metric: metric.metricName,
           dimension: dim ?? "ALL", dimension_value: dval, payload: info,
@@ -33,5 +35,17 @@ export async function syncClarity(db: SupabaseClient): Promise<number> {
       }
     }
   }
-  return await upsertBatched(db, "clarity_snapshots", rows, "captured_on,window_days,metric,dimension,dimension_value");
+  // Clarity can return several rows with the same dimension value for one metric
+  // (e.g. a URL listed twice, or rows missing the dimension). Keep all of them:
+  // a single row is stored as-is, repeats are stored together as { items: [...] }.
+  const byKey = new Map<string, Record<string, any>>();
+  for (const r of rows) {
+    const k = `${r.metric}|${r.dimension}|${r.dimension_value}`;
+    const cur = byKey.get(k);
+    if (!cur) { byKey.set(k, r); continue; }
+    const items = cur.payload?.items && cur._merged ? cur.payload.items : [cur.payload];
+    byKey.set(k, { ...cur, payload: { items: [...items, r.payload] }, _merged: true });
+  }
+  const unique = [...byKey.values()].map(({ _merged, ...r }) => r);
+  return await upsertBatched(db, "clarity_snapshots", unique, "captured_on,window_days,metric,dimension,dimension_value");
 }
