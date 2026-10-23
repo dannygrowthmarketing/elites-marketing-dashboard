@@ -1,0 +1,24 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Web — install, test, build
+        working-directory: web
+        run: |
+          npm ci
+          npx vitest run
+          npm run build
+      - name: Database — migrations, RLS, RPCs (PGlite)
+        working-directory: tests
+        run: |
+          npm ci
+          node db.test.mjs
