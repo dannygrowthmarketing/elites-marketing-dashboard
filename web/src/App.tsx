@@ -13,6 +13,9 @@ const Website = lazy(() => import("./pages/Website"));
 const Paid = lazy(() => import("./pages/Paid"));
 const Revenue = lazy(() => import("./pages/Revenue"));
 const Partnerships = lazy(() => import("./pages/Partnerships"));
+const FunnelAnalytics = lazy(() => import("./pages/FunnelAnalytics"));
+const BudgetSimulator = lazy(() => import("./pages/BudgetSimulator"));
+const AiIntelligence = lazy(() => import("./pages/AiIntelligence"));
 const Crm = lazy(() => import("./pages/Crm"));
 const Attribution = lazy(() => import("./pages/Attribution"));
 const Insights = lazy(() => import("./pages/Insights"));
@@ -20,7 +23,7 @@ const Integrations = lazy(() => import("./pages/Integrations"));
 const Settings = lazy(() => import("./pages/Settings"));
 
 const NAV = [
-  ["/", "Overview"], ["/insights", "Insights"], ["/seo", "SEO"], ["/gbp", "Business Profile"], ["/website", "Website"],
+  ["/", "Overview"], ["/funnel", "Funnel Analytics"], ["/budget", "Budget Simulator"], ["/ai", "AI Intelligence"], ["/insights", "Insights"], ["/seo", "SEO"], ["/gbp", "Business Profile"], ["/website", "Website"],
   ["/paid", "Paid ads"], ["/crm", "Leads & CRM"], ["/revenue", "Revenue"], ["/attribution", "Attribution"], ["/partnerships", "Partnerships"], ["/integrations", "Integrations"], ["/settings", "Settings"],
 ] as const;
 
@@ -85,6 +88,9 @@ function Shell({ email }: { email: string }) {
           <Routes>
             <Route path="/" element={<Overview />} />
             <Route path="/insights" element={<Insights />} />
+            <Route path="/funnel" element={<FunnelAnalytics />} />
+            <Route path="/budget" element={<BudgetSimulator />} />
+            <Route path="/ai" element={<AiIntelligence />} />
             <Route path="/seo" element={<Seo />} />
             <Route path="/gbp" element={<Gbp />} />
             <Route path="/website" element={<Website />} />

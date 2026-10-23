@@ -334,3 +334,49 @@ label.btn { cursor: pointer; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; overflow-wrap: anywhere; }
 .form textarea { font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: 6px 9px; }
 .sitecheck-bar { margin-bottom: 10px; }
+
+/* ---------- Funnel diagram ---------- */
+.funnel-grid { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(220px, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .funnel-grid { grid-template-columns: 1fr; } }
+.funnel-wrap { width: 100%; }
+.funnel-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.fpoly { transition: opacity .15s, filter .15s; }
+.fpoly.f0 { fill: #1E3557; } .fpoly.f1 { fill: #244A72; } .fpoly.f2 { fill: #2A5E86; } .fpoly.f3 { fill: #2E7186; }
+.fpoly.f4 { fill: #2E7D7A; } .fpoly.f5 { fill: #4E8B66; } .fpoly.f6 { fill: #7E9655; } .fpoly.f7 { fill: #A99A47; }
+.fpoly.f8 { fill: #C9A84C; } .fpoly.f9 { fill: #D8BC6C; }
+.fstage:hover .fpoly { filter: brightness(1.12); }
+.fstage.on .fpoly { stroke: var(--gold); stroke-width: 3; }
+.fstage.missing .fpoly { fill: var(--rule); }
+.fval { font: 600 20px var(--serif); fill: #fff; paint-order: stroke; stroke: rgba(0,0,0,.25); stroke-width: 2px; }
+.fstage.missing .fval { fill: var(--muted); stroke: none; }
+.flabel { font: 600 17px var(--sans); fill: var(--ink); }
+.fsub { font: 14px var(--sans); fill: var(--muted); }
+.funnel-side { display: grid; gap: 12px; }
+.leak { border-left: 3px solid var(--bad); }
+.eyebrow-s { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+.big-num { font-family: var(--serif); font-size: 40px; line-height: 1.1; color: var(--navy); font-variant-numeric: tabular-nums; margin: 4px 0; }
+.leak p { margin: 4px 0; }
+
+/* ---------- Budget simulator ---------- */
+.sim-grid { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(0, 1.6fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .sim-grid { grid-template-columns: 1fr; } }
+.sim-controls { display: grid; gap: 16px; }
+.slider { display: grid; gap: 6px; font-size: 13px; }
+.slider .row { display: flex; justify-content: space-between; gap: 8px; }
+.slider strong { font-family: var(--serif); font-size: 18px; color: var(--navy); font-variant-numeric: tabular-nums; }
+.slider input[type=range] { width: 100%; accent-color: var(--gold); padding: 0; min-height: 24px; border: 0; background: transparent; }
+
+/* ---------- AI intelligence ---------- */
+.brief { border-left: 3px solid var(--gold); }
+.brief p { margin: 6px 0; max-width: 78ch; }
+.brief .brief-lead { font-family: var(--serif); font-size: 19px; line-height: 1.45; color: var(--navy); }
+.health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.health { cursor: pointer; border-top: 3px solid var(--rule); }
+.health.good { border-top-color: var(--good); } .health.warn { border-top-color: var(--warn); } .health.bad { border-top-color: var(--bad); }
+.hbar { height: 6px; background: var(--rule); border-radius: 3px; overflow: hidden; margin: 6px 0 8px; }
+.hbar i { display: block; height: 100%; background: var(--gold); }
+.health.good .hbar i { background: var(--good); } .health.bad .hbar i { background: var(--bad); } .health.warn .hbar i { background: var(--warn); }
+.factors { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 8px; font-size: 13px; }
+.factors li.ok strong { color: var(--good); } .factors li.bad strong { color: var(--bad); }
+.anom-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+.anom { display: grid; gap: 2px; }
