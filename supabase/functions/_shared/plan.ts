@@ -1,6 +1,6 @@
 // Pure planning logic for sync windows. No I/O — unit tested.
 
-export type SourceKey = "ga4" | "gsc" | "gbp" | "google_ads" | "meta_ads";
+export type SourceKey = "ga4" | "gsc" | "gbp" | "google_ads" | "meta_ads" | "whatsapp";
 
 export interface SourceSpec {
   chunkDays: number;        // backfill chunk size
@@ -31,6 +31,8 @@ export const SPECS: Record<SourceKey, SourceSpec> = {
   google_ads: { chunkDays: 90, trailingDays: 7, lagDays: 0, floor: () => "2019-02-01" },
   // Meta insights: 37 months max.
   meta_ads: { chunkDays: 90, trailingDays: 7, lagDays: 0, floor: (t) => addDays(addMonths(t, -37), 1) },
+  // WhatsApp Business analytics: keep a year; message stats settle within a couple of days.
+  whatsapp: { chunkDays: 30, trailingDays: 3, lagDays: 0, floor: (t) => addDays(addMonths(t, -12), 1) },
 };
 
 export interface State { earliest_imported: string | null; latest_imported: string | null; backfill_complete: boolean }

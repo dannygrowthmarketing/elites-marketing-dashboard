@@ -9,8 +9,8 @@ export const EVENT_LABEL: Record<string, string> = {
   generate_lead: "Lead form", appointment_confirmed: "Booking confirmed", video_consult_form_submit: "Video consult booked",
 };
 
-export type Channel = "Paid search" | "Organic search" | "Business Profile" | "Direct" | "Social" | "Referral & other";
-export const CHANNELS: Channel[] = ["Paid search", "Organic search", "Business Profile", "Direct", "Social", "Referral & other"];
+export type Channel = "Paid search" | "Organic search" | "Business Profile" | "Direct" | "Social" | "Email" | "Referral & other";
+export const CHANNELS: Channel[] = ["Paid search", "Organic search", "Business Profile", "Direct", "Social", "Email", "Referral & other"];
 
 /** GA4 default channel group (+ source) → dashboard channel. GBP visits carry utm_source=google&utm_campaign=gbp_*. */
 export function channelOfGa4(group: string, source?: string | null, campaign?: string | null): Channel {
@@ -20,6 +20,7 @@ export function channelOfGa4(group: string, source?: string | null, campaign?: s
   if (g.includes("organic search")) return "Organic search";
   if (g === "direct") return "Direct";
   if (g.includes("social")) return "Social";
+  if (g.includes("email") || /mailchimp|newsletter/i.test(source ?? "")) return "Email";
   return "Referral & other";
 }
 
@@ -30,6 +31,7 @@ export function channelOfLead(source?: string | null, medium?: string | null, in
   if (s === "google" && /cpc|ppc|paid/.test(m)) return "Paid search";
   if (m === "organic") return "Organic search";
   if (/facebook|instagram|meta|fb|ig/.test(s)) return "Social";
+  if (m === "email" || /mailchimp|newsletter/.test(s)) return "Email";
   if (!s || s === "(direct)") return "Direct";
   return "Referral & other";
 }

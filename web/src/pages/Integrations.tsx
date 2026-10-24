@@ -12,6 +12,8 @@ const NEXT: Record<string, string> = {
   google_ads: "Connect Google. Access is granted to the Cloud project (developer tokens were retired in Sept 2026).",
   clarity: "Tag is installed and recording. New Clarity projects usually answer the export API only after their first daily processing; the 08:00 sync retries automatically. If it still fails, create a new token in Clarity → Settings → Data export and paste it below.",
   meta_ads: "Paste a Meta system-user token with ads_read and the ad account ID below when access is provided.",
+  mailchimp: "Paste a Mailchimp API key below (Mailchimp → profile icon → Profile → Extras → API keys → Create A Key). If the clinic doesn't use Mailchimp yet, it has a free plan for small lists; paid plans are needed beyond that.",
+  whatsapp: "Needs the WhatsApp Business Platform (Cloud API) number the clinic sends campaigns from. From Meta Business Settings: the WhatsApp Business Account ID, and a system-user token with whatsapp_business_management.",
   wordpress: "Install the WPCode snippet that posts form submissions and Click4Appointment bookings to this dashboard.",
 };
 
@@ -45,7 +47,7 @@ export default function Integrations() {
     } catch (e: any) { setMsg(`${source}: ${e.message}`); }
     setBusy(null); f.refresh();
   }
-  async function saveToken(provider: "clarity" | "meta", form: HTMLFormElement) {
+  async function saveToken(provider: "clarity" | "meta" | "mailchimp" | "whatsapp", form: HTMLFormElement) {
     const d = Object.fromEntries(new FormData(form)) as Record<string, string>;
     setBusy(provider);
     try { await callFunction("credentials", { action: "save", provider, token: d.token, external_id: d.external_id }); setMsg(`${provider} saved.`); form.reset(); }
@@ -87,13 +89,26 @@ export default function Integrations() {
               {(f.role === "owner" || f.role === "editor") && !["wordpress"].includes(i.source) && (
                 <div className="btns">
                   <button className="btn ghost" disabled={busy === i.source} onClick={() => sync(i.source)}>{busy === i.source ? "Syncing…" : "Sync now"}</button>
-                  {["ga4", "gsc", "gbp", "google_ads", "meta_ads"].includes(i.source) && !i.backfill_complete && i.status === "connected" &&
+                  {["ga4", "gsc", "gbp", "google_ads", "meta_ads", "whatsapp"].includes(i.source) && !i.backfill_complete && i.status === "connected" &&
                     <button className="btn ghost" disabled={busy === i.source} onClick={() => sync(i.source, "backfill")}>Backfill next chunk</button>}
                 </div>
               )}
               {isOwner && i.source === "clarity" && (
                 <form className="inline-form" onSubmit={(e) => { e.preventDefault(); saveToken("clarity", e.currentTarget); }}>
                   <input name="token" type="password" placeholder="Clarity API token" autoComplete="off" required />
+                  <button className="btn ghost">Save</button>
+                </form>
+              )}
+              {isOwner && i.source === "mailchimp" && (
+                <form className="inline-form" onSubmit={(e) => { e.preventDefault(); saveToken("mailchimp", e.currentTarget); }}>
+                  <input name="token" type="password" placeholder="Mailchimp API key (ends like -us21)" autoComplete="off" required />
+                  <button className="btn ghost">Save</button>
+                </form>
+              )}
+              {isOwner && i.source === "whatsapp" && (
+                <form className="inline-form" onSubmit={(e) => { e.preventDefault(); saveToken("whatsapp", e.currentTarget); }}>
+                  <input name="external_id" placeholder="WhatsApp Business Account ID" inputMode="numeric" required />
+                  <input name="token" type="password" placeholder="System-user access token" autoComplete="off" required />
                   <button className="btn ghost">Save</button>
                 </form>
               )}

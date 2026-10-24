@@ -274,7 +274,7 @@ await as("owner@x.com", async () => {
 
 // Cron jobs registered
 const jobs = await db.query("select name from cron.job order by name");
-assert.equal(jobs.rows.length, 7);
+assert.equal(jobs.rows.length, 9);
 const cr = await db.query("select count(*)::int n from private.credentials where provider in ('cron','lead_webhook','partner_ingest') and length(api_token)=64");
 assert.equal(cr.rows[0].n, 3);
 

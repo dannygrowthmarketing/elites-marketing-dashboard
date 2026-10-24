@@ -10,6 +10,8 @@ describe("funnel maths", () => {
     expect(channelOfGa4("Organic Search", "google", "gbp_booking")).toBe("Business Profile");
     expect(channelOfGa4("Organic Social")).toBe("Social");
     expect(channelOfGa4("AI Assistant")).toBe("Referral & other");
+    expect(channelOfGa4("Email", "mailchimp")).toBe("Email");
+    expect(channelOfLead("mailchimp", "email")).toBe("Email");
     expect(channelOfLead("google", "cpc")).toBe("Paid search");
     expect(channelOfLead(null, null)).toBe("Direct");
   });

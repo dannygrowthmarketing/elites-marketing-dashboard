@@ -9,8 +9,10 @@ import { syncGbp } from "../_shared/sources/gbp.ts";
 import { PendingApproval, syncAds } from "../_shared/sources/ads.ts";
 import { syncClarity } from "../_shared/sources/clarity.ts";
 import { syncMeta } from "../_shared/sources/meta.ts";
+import { syncMailchimp } from "../_shared/sources/mailchimp.ts";
+import { syncWhatsapp } from "../_shared/sources/whatsapp.ts";
 
-const DATED: SourceKey[] = ["ga4", "gsc", "gbp", "google_ads", "meta_ads"];
+const DATED: SourceKey[] = ["ga4", "gsc", "gbp", "google_ads", "meta_ads", "whatsapp"];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -46,6 +48,9 @@ Deno.serve(async (req) => {
 
     if (source === "clarity") {
       rows = await syncClarity(db);
+      win = { start: today, end: today };
+    } else if (source === "mailchimp") {
+      rows = await syncMailchimp(db);
       win = { start: today, end: today };
     } else if (DATED.includes(source)) {
       const st = { earliest_imported: integ.earliest_imported, latest_imported: integ.latest_imported, backfill_complete: integ.backfill_complete };
@@ -111,6 +116,7 @@ async function runSource(db: any, source: string, externalId: string | null, sta
     case "gbp": return syncGbp(db, externalId, start, end);
     case "google_ads": return syncAds(db, externalId ?? "520-119-6364", start, end);
     case "meta_ads": return syncMeta(db, externalId, start, end);
+    case "whatsapp": return syncWhatsapp(db, externalId, start, end);
   }
   throw new Error(`unknown source ${source}`);
 }
