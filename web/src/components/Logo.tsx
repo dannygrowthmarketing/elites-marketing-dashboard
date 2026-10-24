@@ -70,13 +70,13 @@ export const MARKS: Record<string, Mark> = {
   reviews: { title: "Reviews", hex: "#F4B400", glyph: "star" },
   bank: { title: "Bank transfer", hex: "#5B6B82", glyph: "bank" },
   card: { title: "Card", hex: "#2F5F8F", glyph: "card" },
-  home: { title: "Overview", hex: "#C9A84C", glyph: "home" }, bulb: { title: "Insights", hex: "#C9A84C", glyph: "bulb" },
-  spark: { title: "AI", hex: "#C9A84C", glyph: "spark" }, funnel: { title: "Funnel", hex: "#C9A84C", glyph: "funnel" },
-  sliders: { title: "Simulator", hex: "#C9A84C", glyph: "sliders" }, doc: { title: "Reports", hex: "#C9A84C", glyph: "doc" },
-  gear: { title: "Settings", hex: "#C9A84C", glyph: "gear" }, plug: { title: "Integrations", hex: "#C9A84C", glyph: "plug" },
-  trophy: { title: "Competitors", hex: "#C9A84C", glyph: "trophy" }, rupee: { title: "Revenue", hex: "#C9A84C", glyph: "rupee" },
-  handshake: { title: "Partnerships", hex: "#C9A84C", glyph: "handshake" }, attribution: { title: "Attribution", hex: "#C9A84C", glyph: "attribution" },
-  plan: { title: "Budget", hex: "#C9A84C", glyph: "reserve" }, leads: { title: "Leads", hex: "#C9A84C", glyph: "crm" }, site: { title: "Website", hex: "#C9A84C", glyph: "web" },
+  home: { title: "Overview", hex: "#F59E0B", glyph: "home" }, bulb: { title: "Insights", hex: "#EAB308", glyph: "bulb" },
+  spark: { title: "AI", hex: "#8B5CF6", glyph: "spark" }, funnel: { title: "Funnel", hex: "#6366F1", glyph: "funnel" },
+  sliders: { title: "Simulator", hex: "#0EA5E9", glyph: "sliders" }, doc: { title: "Reports", hex: "#2563EB", glyph: "doc" },
+  gear: { title: "Settings", hex: "#64748B", glyph: "gear" }, plug: { title: "Integrations", hex: "#16A34A", glyph: "plug" },
+  trophy: { title: "Competitors", hex: "#F97316", glyph: "trophy" }, rupee: { title: "Revenue", hex: "#059669", glyph: "rupee" },
+  handshake: { title: "Partnerships", hex: "#E11D48", glyph: "handshake" }, attribution: { title: "Attribution", hex: "#0891B2", glyph: "attribution" },
+  plan: { title: "Budget", hex: "#D97706", glyph: "reserve" }, leads: { title: "Leads", hex: "#9333EA", glyph: "crm" }, site: { title: "Website", hex: "#0F766E", glyph: "web" },
 };
 
 /** Integration source key → mark. */
@@ -93,7 +93,7 @@ export function Logo({ id, size = 22, tile = true, title, style }: { id: string;
   const body = "path" in m
     ? <svg viewBox="0 0 24 24" width={inner} height={inner} aria-hidden><path d={m.path} fill={m.hex} /></svg>
     : "glyph" in m
-      ? <svg viewBox="0 0 24 24" width={inner} height={inner} aria-hidden fill="none" stroke={m.hex} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round"><path d={GLYPHS[m.glyph]} /></svg>
+      ? <svg viewBox="0 0 24 24" width={inner} height={inner} aria-hidden fill="none" stroke={m.hex} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d={GLYPHS[m.glyph]} /></svg>
       : <span style={{ fontSize: Math.round(size * (m.letters.length > 1 ? 0.36 : 0.46)), color: m.hex, fontWeight: 800, letterSpacing: "-.02em" }}>{m.letters}</span>;
   if (!tile) return <span className="logo-bare" title={label} role="img" aria-label={label} style={style}>{body}</span>;
   return (

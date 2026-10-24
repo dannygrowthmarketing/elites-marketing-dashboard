@@ -628,3 +628,9 @@ code.url { font-family: var(--mono); font-size: 11px; background: var(--hover); 
 .s-camp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 24px; }
 .s-camps.n1 .s-camp-grid strong { font-size: 48px; }
 .s-camp-grid small { display: block; color: #8A93A2; font-size: 14px; } .s-camp-grid strong { font-family: var(--display); font-size: 30px; font-weight: 500; color: #0B1F3A; }
+/* brighter sidebar icons */
+.side nav a .logo-tile { background: #fff; border: 0; box-shadow: 0 0 0 1px rgba(255,255,255,.35), 0 3px 10px -2px color-mix(in srgb, var(--lc) 70%, transparent); transition: transform .15s, box-shadow .15s; }
+.side nav a .logo-tile svg { filter: saturate(1.25) brightness(1.05); }
+.side nav a:hover .logo-tile { transform: scale(1.08); box-shadow: 0 0 0 1px rgba(255,255,255,.5), 0 4px 14px -2px color-mix(in srgb, var(--lc) 90%, transparent); }
+.side nav a.on .logo-tile { box-shadow: 0 0 0 2px #E9D9A6, 0 0 16px 2px color-mix(in srgb, var(--lc) 80%, transparent); }
+.side nav a { color: #E6ECF5; }
