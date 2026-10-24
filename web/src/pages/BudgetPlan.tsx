@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, Cell, ComposedChart, Legend, Line, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Kpi, KpiRow, Page, Section, Tag } from "../components/ui";
 import { useTable } from "../state";
-import { allocate, DEFAULT_ASSUMPTIONS, project, type Assumptions, type Category, type Goal } from "../lib/budgetPlan";
+import { allocate, byChannel, DEFAULT_ASSUMPTIONS, project, type Assumptions, type Category, type Goal } from "../lib/budgetPlan";
+import { Logo, LogoStack } from "../components/Logo";
 import { ACTION_EVENTS, BOOKING_EVENTS } from "../lib/funnel";
 import { fmt } from "../lib/metrics";
 import { C } from "./Overview";
 
-const PRESETS = [200000, 500000, 1000000, 2000000];
+const PRESETS = [50000, 75000, 100000, 200000, 500000, 1000000, 2000000];
+const COMPARE = [50000, 100000, 200000, 500000, 1000000];
 const GOALS: { k: Goal; label: string; blurb: string }[] = [
   { k: "patients", label: "More patients now", blurb: "Most of the money on search and Maps, where people are already looking for a dentist." },
   { k: "balanced", label: "Balanced", blurb: "Patients this quarter plus the content and reputation that make next quarter cheaper." },
@@ -15,12 +17,12 @@ const GOALS: { k: Goal; label: string; blurb: string }[] = [
 ];
 const CAT_COLOR: Record<Category, string> = { "Paid media": C.navy, Foundation: C.teal, "Content & creative": C.gold, "Community & CRM": C.plum, Reserve: C.slate };
 const CALLS = ["phone_call_click", "whatsapp_click", "joinchat"];
-const lakh = (n: number) => `₹${(n / 1e5).toLocaleString("en-IN", { maximumFractionDigits: 2 })}L`;
+const lakh = (n: number) => n < 100000 ? `₹${Math.round(n / 1000)}K` : `₹${(n / 1e5).toLocaleString("en-IN", { maximumFractionDigits: 2 })}L`;
 const back = (n: number) => { const d = new Date(); d.setUTCDate(d.getUTCDate() - n); return d.toISOString().slice(0, 10); };
 
 export default function BudgetPlan() {
-  const [total, setTotal] = useState(500000);
-  const [months, setMonths] = useState(6);
+  const [total, setTotal] = useState(100000);
+  const [months, setMonths] = useState(3);
   const [goal, setGoal] = useState<Goal>("balanced");
   const [a, setA] = useState<Assumptions>(DEFAULT_ASSUMPTIONS);
   const [measured, setMeasured] = useState<Record<string, string>>({});
@@ -51,13 +53,14 @@ export default function BudgetPlan() {
   const plan = useMemo(() => allocate(total, months, goal), [total, months, goal]);
   const proj = useMemo(() => project(plan, a), [plan, a]);
   const media = plan.byCategory.find((c) => c.category === "Paid media")?.share ?? 0;
-  const compare = PRESETS.map((t) => { const p = project(allocate(t, months, goal), a); return { t, ...p }; });
+  const compare = COMPARE.map((t) => { const p = project(allocate(t, months, goal), a); return { t, ...p }; });
   const monthRows = plan.monthTotals.map((_, m) => {
     const row: any = { month: `M${m + 1}`, patients: +proj.months[m].patients.toFixed(1) };
     for (const c of plan.byCategory) row[c.category] = Math.round(plan.lines.filter((l) => l.item.category === c.category).reduce((s, l) => s + l.byMonth[m], 0));
     return row;
   });
   const lines = [...plan.lines].sort((x, y) => y.total - x.total);
+  const channels = byChannel(plan);
 
   return (
     <Page eyebrow="Planning" title="Marketing budget proposal"
@@ -67,9 +70,9 @@ export default function BudgetPlan() {
       <div className="plan-inputs card">
         <div><label className="small muted">Total budget</label>
           <div className="seg">{PRESETS.map((p) => <button key={p} className={total === p ? "on" : ""} onClick={() => setTotal(p)}>{lakh(p)}</button>)}
-            <input type="number" min={50000} step={10000} value={total} onChange={(e) => setTotal(Math.max(50000, +e.target.value || 0))} aria-label="Custom total budget in rupees" style={{ width: 130 }} /></div></div>
+            <input type="number" min={25000} step={5000} value={total} onChange={(e) => setTotal(Math.max(25000, +e.target.value || 0))} aria-label="Custom total budget in rupees" style={{ width: 130 }} /></div></div>
         <div><label className="small muted">Over</label>
-          <div className="seg">{[3, 6, 12].map((m) => <button key={m} className={months === m ? "on" : ""} onClick={() => setMonths(m)}>{m} months</button>)}</div></div>
+          <div className="seg">{[1, 3, 6, 12].map((m) => <button key={m} className={months === m ? "on" : ""} onClick={() => setMonths(m)}>{m === 1 ? "1 month" : `${m} months`}</button>)}</div></div>
         <div><label className="small muted">Priority</label>
           <div className="seg">{GOALS.map((g) => <button key={g.k} className={goal === g.k ? "on" : ""} onClick={() => setGoal(g.k)}>{g.label}</button>)}</div>
           <p className="small muted" style={{ margin: "6px 0 0" }}>{GOALS.find((g) => g.k === goal)!.blurb}</p></div>
@@ -82,9 +85,25 @@ export default function BudgetPlan() {
         <Kpi big label="Cost per patient" value={proj.costPerPatient} format="inr" sub="all-in, including set-up" />
         <Kpi big label="Projected revenue" value={proj.revenue} format="compact" sub={proj.roas ? `${proj.roas.toFixed(1)}× the budget` : undefined} />
       </KpiRow>
-      <p className="small muted">Projections count patients from search, Maps, Meta ads and camps. SEO, reviews, directories, retargeting and WhatsApp recalls also bring patients, but their effect is too uncertain to put a number on — treat the figure as a floor for those.</p>
+      <p className="small muted">Projections count patients from search, Maps, Meta, influencers, WhatsApp recalls and camps. SEO, reviews, directories, email and retargeting also bring patients, but their effect is too uncertain to put a number on — treat the figure as a floor for those.</p>
 
-      <Section n="01" title="Where the money goes">
+      <Section n="01" title="The plan, channel by channel" note="Every rupee, grouped the way the clinic will see it on invoices and reports.">
+        <div className="chan-grid">
+          {channels.map((c) => (
+            <article key={c.key} className="chan-card" style={{ ["--share" as any]: `${Math.round(c.share * 100)}%` }}>
+              <header><LogoStack ids={c.logos} size={30} /><span className="chan-pct">{Math.round(c.share * 100)}%</span></header>
+              <h3>{c.label}</h3>
+              <div className="chan-amt">{fmt.inr(c.total)}<small> · {fmt.inr(c.total / months)}/mo</small></div>
+              <div className="chan-bar"><i /></div>
+              <p className="small muted">{c.blurb}</p>
+              <ul>{c.lines.map((l) => <li key={l.item.key}><Logo id={l.item.logo} size={18} /><span>{l.item.label}</span><b>{fmt.compact(l.total)}</b></li>)}</ul>
+            </article>
+          ))}
+        </div>
+        {months === 1 && <p className="small muted">One-month plans pay the set-up and ad-learning cost without the payback months — the same money over 3 months usually brings more patients.</p>}
+      </Section>
+
+      <Section n="02" title="Where the money goes">
         <div className="grid2">
           <div className="chart">
             <div className="chart-title">By type of spend</div>
@@ -115,7 +134,7 @@ export default function BudgetPlan() {
         <div className="table-wrap scroll-x"><table>
           <thead><tr><th>Line</th><th className="r">Total</th><th className="r">Per month</th><th className="r">Share</th><th>What it buys</th><th>Judge it by</th></tr></thead>
           <tbody>{lines.map((l) => (
-            <tr key={l.item.key}><td><span className="sw" style={{ background: CAT_COLOR[l.item.category] }} /> <strong>{l.item.label}</strong><br /><span className="small muted">{l.item.category}{l.item.phasing === "front" ? " · front-loaded" : l.item.phasing === "ramp" ? " · ramps up" : ""}</span></td>
+            <tr key={l.item.key}><td><span className="line-name"><Logo id={l.item.logo} size={26} /><span><strong>{l.item.label}</strong><br /><span className="small muted">{l.item.category}{l.item.phasing === "front" ? " · front-loaded" : l.item.phasing === "ramp" ? " · ramps up" : ""}</span></span></span></td>
               <td className="r num">{fmt.inr(l.total)}</td><td className="r num">{fmt.inr(l.monthly)}</td><td className="r num">{fmt.pct(l.share, 0)}</td>
               <td className="small">{l.item.buys}</td><td className="small muted">{l.item.kpi}</td></tr>
           ))}
@@ -125,7 +144,7 @@ export default function BudgetPlan() {
         {plan.dropped.length > 0 && <p className="small muted">Left out at this budget (too small to work): {plan.dropped.map((d) => d.label).join(", ")}. Their share went to the lines above.</p>}
       </Section>
 
-      <Section n="02" title="Month by month" note="Set-up work (tracking, website, directories, the first shoot) is front-loaded. Ads start at 60% and reach full spend by month 3 while campaigns learn.">
+      <Section n="03" title="Month by month" note="Set-up work (tracking, website, directories, the first shoot) is front-loaded. Ads start at 60% and reach full spend by month 3 while campaigns learn.">
         <div className="chart">
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={monthRows} margin={{ left: 0, right: 10 }}>
@@ -147,7 +166,7 @@ export default function BudgetPlan() {
         </ol>
       </Section>
 
-      <Section n="03" title="What different budgets buy" note={`Same ${months}-month period and priority. Each extra lakh buys fewer extra patients, because local search demand within a few km is limited.`}>
+      <Section n="04" title="What different budgets buy" note={`Same ${months}-month period and priority. Each extra lakh buys fewer extra patients, because local search demand within a few km is limited.`}>
         <div className="table-wrap"><table>
           <thead><tr><th>Budget</th><th className="r">Per month</th><th className="r">Projected patients</th><th className="r">Likely range</th><th className="r">Cost per patient</th><th className="r">Projected revenue</th></tr></thead>
           <tbody>{compare.map((c) => (
@@ -157,7 +176,7 @@ export default function BudgetPlan() {
         </table></div>
       </Section>
 
-      <Section n="04" title="Assumptions" note="Change any number and the plan updates. ‘Measured’ values come from the dashboard's own data; the rest are planning estimates until there is enough data to replace them.">
+      <Section n="05" title="Assumptions" note="Change any number and the plan updates. ‘Measured’ values come from the dashboard's own data; the rest are planning estimates until there is enough data to replace them.">
         <div className="assume-grid">
           {([
             ["searchCpc", "Search cost per click (₹)", 1],
@@ -167,6 +186,10 @@ export default function BudgetPlan() {
             ["localCostFactor", "Maps/PMax cost per patient vs Search (×)", 0.1],
             ["metaCostPerLead", "Meta cost per lead (₹)", 25],
             ["metaLeadToPatient", "Meta lead → patient", 0.05],
+            ["waCostPerMessage", "WhatsApp cost per message (₹)", 0.1],
+            ["waBookRate", "WhatsApp message → booking", 0.001],
+            ["waAudience", "Opted-in WhatsApp contacts", 100],
+            ["influencerCostPerPatient", "Influencer cost per patient (₹)", 250],
             ["campCost", "Cost per camp (₹)", 1000],
             ["patientsPerCamp", "Patients per camp", 1],
             ["revenuePerPatient", "Revenue per patient (₹)", 100],

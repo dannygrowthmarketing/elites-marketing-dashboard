@@ -57,15 +57,15 @@ function PaidPerformance({ tabs }: { tabs: ReactNode }) {
         : undefined}</Pending>}
       <Section n="01" title="Google Ads">
         <KpiRow>
-          <Kpi label="Spend" value={t.ads_cost} prev={p?.ads_cost} format="inr" defKey="ads_cost" invert />
+          <Kpi logo="google_ads" label="Spend" value={t.ads_cost} prev={p?.ads_cost} format="inr" defKey="ads_cost" invert />
           <Kpi label="Impressions" value={t.ads_impressions} prev={p?.ads_impressions} format="compact" />
           <Kpi label="Clicks" value={t.ads_clicks} prev={p?.ads_clicks} />
           <Kpi label="CTR" value={ctr(t.ads_clicks, t.ads_impressions)} prev={p ? ctr(p.ads_clicks, p.ads_impressions) : undefined} format="pct" />
-          <Kpi label="Avg CPC" value={cpc(t.ads_cost, t.ads_clicks)} prev={p ? cpc(p.ads_cost, p.ads_clicks) : undefined} format="inr" defKey="ads_cpc" invert />
-          <Kpi label="CPM" value={cpm(t.ads_cost, t.ads_impressions)} format="inr" defKey="ads_cpm" invert />
-          <Kpi label="Conversions" value={t.ads_conversions} prev={p?.ads_conversions} format="dec" defKey="ads_conversions" />
+          <Kpi logo="google_ads" label="Avg CPC" value={cpc(t.ads_cost, t.ads_clicks)} prev={p ? cpc(p.ads_cost, p.ads_clicks) : undefined} format="inr" defKey="ads_cpc" invert />
+          <Kpi logo="google_ads" label="CPM" value={cpm(t.ads_cost, t.ads_impressions)} format="inr" defKey="ads_cpm" invert />
+          <Kpi logo="google_ads" label="Conversions" value={t.ads_conversions} prev={p?.ads_conversions} format="dec" defKey="ads_conversions" />
           <Kpi label="Conv. rate" value={convRate(t.ads_conversions, t.ads_clicks)} format="pct" />
-          <Kpi label="Cost / conversion" value={costPer(t.ads_cost, t.ads_conversions)} prev={p ? costPer(p.ads_cost, p.ads_conversions) : undefined} format="inr" defKey="ads_cpa" invert />
+          <Kpi logo="google_ads" label="Cost / conversion" value={costPer(t.ads_cost, t.ads_conversions)} prev={p ? costPer(p.ads_cost, p.ads_conversions) : undefined} format="inr" defKey="ads_cpa" invert />
         </KpiRow>
         <p className="muted small">Conversion value and ROAS are omitted: every conversion action in this account is valued at a placeholder ₹1, so Google's value figures carry no meaning.</p>
         <TrendChart rows={cur.data} prevRows={f.prev ? prev.data : null} series={[

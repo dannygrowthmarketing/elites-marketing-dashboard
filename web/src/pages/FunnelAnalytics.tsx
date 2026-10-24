@@ -69,11 +69,11 @@ export default function FunnelAnalytics() {
         {!stages ? <Loading h={420} /> : (
           <>
             <KpiRow>
-              <Kpi big label="Website visits" value={val("visited")} prev={prevStages ? val("visited", prevStages) : undefined} defKey="ga4_sessions" />
-              <Kpi label="Lead actions" value={val("action")} prev={prevStages ? val("action", prevStages) : undefined} />
+              <Kpi logo="ga4" big label="Website visits" value={val("visited")} prev={prevStages ? val("visited", prevStages) : undefined} defKey="ga4_sessions" />
+              <Kpi logo="crm" label="Lead actions" value={val("action")} prev={prevStages ? val("action", prevStages) : undefined} />
               <Kpi label="Online bookings" value={val("booked_online")} prev={prevStages ? val("booked_online", prevStages) : undefined} />
               <Kpi label="Visit → action" value={ratio(val("action"), val("visited"))} prev={prevStages ? ratio(val("action", prevStages), val("visited", prevStages)) : undefined} format="pct" />
-              {paidSpend != null && <Kpi label="Ad cost per lead action" value={ratio(paidSpend, paidActions)} prev={p && chPrev ? ratio(p.ads_cost, chPrev["Paid search"].actions) : undefined} format="inr" invert />}
+              {paidSpend != null && <Kpi logo="google_ads" label="Ad cost per lead action" value={ratio(paidSpend, paidActions)} prev={p && chPrev ? ratio(p.ads_cost, chPrev["Paid search"].actions) : undefined} format="inr" invert />}
               {paidSpend != null && <Kpi label="Ad cost per online booking" value={ratio(paidSpend, paidBookings)} prev={p && chPrev ? ratio(p.ads_cost, chPrev["Paid search"].bookings) : undefined} format="inr" invert />}
             </KpiRow>
             {prevStages && (val("action") ?? 0) > 20 && (val("action", prevStages) ?? 0) < (val("action") ?? 0) * 0.2 && (
@@ -275,7 +275,7 @@ function CampaignDrill({ c }: { c: any }) {
     <div>
       <KpiRow>
         <Kpi label="Spend" value={+c.cost} format="inr" /><Kpi label="Clicks" value={+c.clicks} />
-        <Kpi label="CPC" value={ratio(+c.cost, +c.clicks)} format="inr" /><Kpi label="CTR" value={ratio(+c.clicks, +c.impressions)} format="pct" />
+        <Kpi logo="google_ads" label="CPC" value={ratio(+c.cost, +c.clicks)} format="inr" /><Kpi label="CTR" value={ratio(+c.clicks, +c.impressions)} format="pct" />
       </KpiRow>
       {rows.error ? <ErrorBox msg={rows.error} /> : <TrendChart rows={rows.data ? data : null} height={220} series={[
         { key: "clicks", label: "Clicks", color: C.navy }, { key: "cost", label: "Spend (₹)", color: C.gold, axis: "right", format: "inr" }]} />}

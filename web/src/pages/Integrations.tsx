@@ -4,6 +4,10 @@ import { useFilters, useTable } from "../state";
 import { callFunction, supabase } from "../lib/supabase";
 import { fmt } from "../lib/metrics";
 import { StatusTag } from "./Overview";
+import { Logo, SOURCE_MARK } from "../components/Logo";
+
+const FN = "https://pymwnsjjztahucqzlqkl.supabase.co/functions/v1/payments-webhook";
+const GATEWAYS = ["razorpay", "phonepe", "cashfree"];
 
 const NEXT: Record<string, string> = {
   ga4: "Connect Google below. Uses the GA4 Data API (read-only).",
@@ -14,6 +18,9 @@ const NEXT: Record<string, string> = {
   meta_ads: "Paste a Meta system-user token with ads_read and the ad account ID below when access is provided.",
   mailchimp: "Paste a Mailchimp API key below (Mailchimp → profile icon → Profile → Extras → API keys → Create A Key). If the clinic doesn't use Mailchimp yet, it has a free plan for small lists; paid plans are needed beyond that.",
   whatsapp: "Needs the WhatsApp Business Platform (Cloud API) number the clinic sends campaigns from. From Meta Business Settings: the WhatsApp Business Account ID, and a system-user token with whatsapp_business_management.",
+  razorpay: "In Razorpay Dashboard → Accounts & Settings → Webhooks → Add: paste the webhook URL below, tick payment.captured, payment.failed and refund.processed, choose a secret, then save that same secret here. Covers UPI (Google Pay, PhonePe, Paytm), cards and netbanking. Razorpay charges a fee per transaction — the clinic's account, the clinic's call.",
+  phonepe: "PhonePe Business Dashboard → Developer settings → Webhooks: paste the webhook URL below, set a username and password, select order completed/failed and refund events, then save username:password here.",
+  cashfree: "Cashfree Merchant Dashboard → Developers → Webhooks: add the webhook URL below for payment and refund events, then paste the account's secret key here.",
   wordpress: "Install the WPCode snippet that posts form submissions and Click4Appointment bookings to this dashboard.",
 };
 
@@ -47,7 +54,7 @@ export default function Integrations() {
     } catch (e: any) { setMsg(`${source}: ${e.message}`); }
     setBusy(null); f.refresh();
   }
-  async function saveToken(provider: "clarity" | "meta" | "mailchimp" | "whatsapp", form: HTMLFormElement) {
+  async function saveToken(provider: string, form: HTMLFormElement) {
     const d = Object.fromEntries(new FormData(form)) as Record<string, string>;
     setBusy(provider);
     try { await callFunction("credentials", { action: "save", provider, token: d.token, external_id: d.external_id }); setMsg(`${provider} saved.`); form.reset(); }
@@ -69,11 +76,11 @@ export default function Integrations() {
         </div>
       </Section>
 
-      <Section n="02" title="Sources">
+      <Section n="02" title="Data sources">
         <div className="integ-grid">
-          {(integ.data ?? []).map((i) => (
+          {(integ.data ?? []).filter((i) => !GATEWAYS.includes(i.source)).map((i) => (
             <article key={i.source} className="card integ">
-              <div className="integ-top"><h3>{i.label}</h3><StatusTag s={i.status} /></div>
+              <div className="integ-top"><h3><Logo id={SOURCE_MARK[i.source] ?? "web"} size={30} />{i.label}</h3><StatusTag s={i.status} /></div>
               <dl className="kv">
                 <dt>ID</dt><dd>{i.external_id ?? "—"}</dd>
                 <dt>Earliest available</dt><dd>{i.earliest_available ?? "—"}</dd>
@@ -124,7 +131,35 @@ export default function Integrations() {
         </div>
       </Section>
 
-      <Section n="03" title="Sync log" note="Daily syncs run between 06:00 and 08:00 IST. While a backfill is in progress, the next historical chunk runs every 15 minutes.">
+      <Section n="03" title="Payment gateways" note="Online payments land in Revenue the moment they clear, matched to the patient's lead by phone. Google Pay and PhonePe payments made through a gateway show which app paid. Only amount, method, app and time are kept — no UPI IDs, card numbers or phone numbers.">
+        <div className="pay-strip"><Logo id="gpay" size={34} /><Logo id="phonepe" size={34} /><Logo id="paytm" size={34} /><Logo id="upi" size={34} /><Logo id="card" size={34} /><span className="muted small">All arrive through one of the gateways below. Direct UPI to the clinic's bank QR has no data feed — upload the bank statement on the Revenue page instead.</span></div>
+        <div className="integ-grid">
+          {(integ.data ?? []).filter((i) => GATEWAYS.includes(i.source)).map((i) => (
+            <article key={i.source} className="card integ">
+              <div className="integ-top"><h3><Logo id={SOURCE_MARK[i.source]} size={30} />{i.label}</h3>
+                {i.status === "pending_approval" ? <Tag tone="info">Secret saved · waiting for first payment</Tag> : <StatusTag s={i.status} />}</div>
+              <dl className="kv">
+                <dt>Payments received</dt><dd>{fmt.int(i.records_total)}</dd>
+                <dt>Last payment</dt><dd>{i.last_success_at ? new Date(i.last_success_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "—"}</dd>
+                <dt>Webhook URL</dt><dd><code className="url">{FN}?provider={i.source}</code> <button className="btn ghost tiny" onClick={() => navigator.clipboard?.writeText(`${FN}?provider=${i.source}`)}>Copy</button></dd>
+              </dl>
+              {i.last_error && <div className="errorbox small">{i.last_error}</div>}
+              <p className="small">{i.limitations}</p>
+              {i.status !== "connected" && <p className="small next"><strong>Set up:</strong> {NEXT[i.source]}</p>}
+              {isOwner && (
+                <form className="inline-form" onSubmit={(e) => { e.preventDefault(); saveToken(i.source, e.currentTarget); }}>
+                  <input name="token" type="password" autoComplete="off" required
+                    placeholder={i.source === "razorpay" ? "Webhook secret you set in Razorpay" : i.source === "phonepe" ? "webhook-username:password" : "Cashfree secret key"} />
+                  <button className="btn ghost">Save</button>
+                </form>
+              )}
+            </article>
+          ))}
+          {(integ.data ?? []).filter((i) => GATEWAYS.includes(i.source)).length === 0 && <div className="pending">Payment gateways appear here after the latest database update is run (run-in-supabase SQL file).</div>}
+        </div>
+      </Section>
+
+      <Section n="04" title="Sync log" note="Daily syncs run between 06:00 and 08:00 IST. While a backfill is in progress, the next historical chunk runs every 15 minutes.">
         <DataTable rows={runs.data} limit={20} csvName="sync-log" cols={[
           { key: "started_at", label: "Started", render: (r) => new Date(r.started_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "short", timeStyle: "short" }) },
           { key: "source", label: "Source" }, { key: "kind", label: "Kind" },

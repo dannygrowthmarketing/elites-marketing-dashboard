@@ -1,8 +1,10 @@
-// Owner-only: save or remove API tokens that don't use OAuth (Clarity, Meta, Mailchimp, WhatsApp), and set source ids.
+// Owner-only: save or remove API tokens that don't use OAuth (Clarity, Meta, Mailchimp, WhatsApp, payment gateway webhook secrets), and set source ids.
 // POST { action: 'save'|'remove', provider: 'clarity'|'meta'|'mailchimp'|'whatsapp', token?, external_id? }
 import { admin, callerRole, cors, json } from "../_shared/util.ts";
 
-const ALLOWED: Record<string, string> = { clarity: "clarity", meta: "meta_ads", mailchimp: "mailchimp", whatsapp: "whatsapp" };
+const ALLOWED: Record<string, string> = { clarity: "clarity", meta: "meta_ads", mailchimp: "mailchimp", whatsapp: "whatsapp", razorpay: "razorpay", phonepe: "phonepe", cashfree: "cashfree" };
+// Gateways push to us by webhook; saving the secret means "ready", and the first verified payment marks them connected.
+const WEBHOOK = new Set(["razorpay", "phonepe", "cashfree"]);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -26,7 +28,12 @@ Deno.serve(async (req) => {
     if (typeof token !== "string" || token.length < 10) return json({ error: "token missing" }, 400);
     if (provider === "mailchimp" && !/-[a-z]+\d+$/.test(token.trim())) return json({ error: "That doesn't look like a Mailchimp API key — it should end like -us21" }, 400);
     if (provider === "whatsapp" && !/^\d{6,}$/.test(String(external_id ?? "").trim())) return json({ error: "Enter the WhatsApp Business Account ID (numbers only)" }, 400);
+    if (provider === "phonepe" && !/^[^:]+:.+$/.test(token.trim())) return json({ error: "Enter the PhonePe webhook username and password as username:password" }, 400);
     await db.rpc("svc_put_credential", { p_provider: provider, p_api_token: token.trim() });
+    if (WEBHOOK.has(provider)) {
+      await db.from("integrations").update({ status: "pending_approval", last_error: null }).eq("source", source).neq("status", "connected");
+      return json({ ok: true });
+    }
     const patch: Record<string, unknown> = { status: "connected", last_error: null };
     if (external_id) patch.external_id = String(external_id).trim();
     await db.from("integrations").update(patch).eq("source", source);

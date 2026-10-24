@@ -59,10 +59,10 @@ function SeoSearch({ tabs }: { tabs: ReactNode }) {
       {notConnected && <Pending source="Search Console" />}
       <Section n="01" title="Search performance">
         <KpiRow>
-          <Kpi label="Clicks" value={t.gsc_clicks} prev={p?.gsc_clicks} defKey="gsc_clicks" />
-          <Kpi label="Impressions" value={t.gsc_impressions} prev={p?.gsc_impressions} defKey="gsc_impressions" />
-          <Kpi label="CTR" value={ctr(t.gsc_clicks, t.gsc_impressions)} prev={p ? ctr(p.gsc_clicks, p.gsc_impressions) : undefined} format="pct" defKey="gsc_ctr" />
-          <Kpi label="Avg position" value={t.gsc_position} prev={p?.gsc_position} format="dec" defKey="gsc_position" invert />
+          <Kpi logo="gsc" label="Clicks" value={t.gsc_clicks} prev={p?.gsc_clicks} defKey="gsc_clicks" />
+          <Kpi logo="gsc" label="Impressions" value={t.gsc_impressions} prev={p?.gsc_impressions} defKey="gsc_impressions" />
+          <Kpi logo="gsc" label="CTR" value={ctr(t.gsc_clicks, t.gsc_impressions)} prev={p ? ctr(p.gsc_clicks, p.gsc_impressions) : undefined} format="pct" defKey="gsc_ctr" />
+          <Kpi logo="gsc" label="Avg position" value={t.gsc_position} prev={p?.gsc_position} format="dec" defKey="gsc_position" invert />
         </KpiRow>
         <TrendChart rows={cur.data} prevRows={f.prev ? prev.data : null} series={[
           { key: "gsc_impressions", label: "Impressions", color: C.slate, kind: "area" },

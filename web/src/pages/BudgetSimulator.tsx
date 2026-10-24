@@ -77,8 +77,8 @@ export default function BudgetSimulator() {
           <KpiRow>
             <Kpi label="Active ad days" value={base.days} />
             <Kpi label="Spend per month" value={m.spend} format="inr" />
-            <Kpi label="Cost per click" value={base.clicks ? base.spend / base.clicks : null} format="inr" />
-            <Kpi label="Calls & WhatsApp taps / month" value={m.calls} format="dec" sub={base.visits ? `${fmt.pct(base.calls / base.visits)} of paid visits` : undefined} />
+            <Kpi logo="google_ads" label="Cost per click" value={base.clicks ? base.spend / base.clicks : null} format="inr" />
+            <Kpi logo="whatsapp" label="Calls & WhatsApp taps / month" value={m.calls} format="dec" sub={base.visits ? `${fmt.pct(base.calls / base.visits)} of paid visits` : undefined} />
             <Kpi label="Online bookings / month" value={m.bookings} format="dec" sub={onlineRate != null ? `${fmt.pct(onlineRate)} of paid visits` : undefined} />
           </KpiRow>
         )}
@@ -105,9 +105,9 @@ export default function BudgetSimulator() {
             <div>
               <KpiRow>
                 <Kpi big label="Patients per month" value={r.patients} format="dec" prev={now?.patients} sub={`likely ${r.low.toFixed(0)}–${r.high.toFixed(0)}`} />
-                <Kpi label="Revenue per month" value={r.revenue} format="inr" prev={now?.revenue} />
+                <Kpi logo="rupee" label="Revenue per month" value={r.revenue} format="inr" prev={now?.revenue} />
                 <Kpi label="Cost per patient" value={r.costPerPatient} format="inr" prev={now?.costPerPatient} invert />
-                <Kpi label="Return on ad spend" value={r.roas} format="x" prev={now?.roas} />
+                <Kpi logo="google_ads" label="Return on ad spend" value={r.roas} format="x" prev={now?.roas} />
                 <Kpi label="Cost of the next booking" value={marg} format="inr" sub="extra spend ÷ extra bookings at +10%" invert />
               </KpiRow>
               {thin && <p className="warnline">Only {base.days} active days and few bookings behind this — treat it as a direction, not a promise. The range shows how much it could vary.</p>}

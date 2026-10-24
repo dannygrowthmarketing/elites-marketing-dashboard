@@ -6,6 +6,7 @@ import { FiltersProvider, useFilters } from "./state";
 import { DateBar, Loading } from "./components/ui";
 import Login from "./pages/Login";
 import Overview from "./pages/Overview";
+import { Logo } from "./components/Logo";
 
 const Seo = lazy(() => import("./pages/Seo"));
 const Gbp = lazy(() => import("./pages/Gbp"));
@@ -18,6 +19,7 @@ const BudgetSimulator = lazy(() => import("./pages/BudgetSimulator"));
 const AiIntelligence = lazy(() => import("./pages/AiIntelligence"));
 const Messaging = lazy(() => import("./pages/Messaging"));
 const Competitors = lazy(() => import("./pages/Competitors"));
+const Influencers = lazy(() => import("./pages/Influencers"));
 const Reports = lazy(() => import("./pages/Reports"));
 const BudgetPlan = lazy(() => import("./pages/BudgetPlan"));
 const Crm = lazy(() => import("./pages/Crm"));
@@ -26,10 +28,13 @@ const Insights = lazy(() => import("./pages/Insights"));
 const Integrations = lazy(() => import("./pages/Integrations"));
 const Settings = lazy(() => import("./pages/Settings"));
 
-const NAV = [
-  ["/", "Overview"], ["/funnel", "Funnel Analytics"], ["/budget", "Budget Simulator"], ["/budget-plan", "Budget Proposal"], ["/ai", "AI Intelligence"], ["/competitors", "Competitors"], ["/reports", "Reports"], ["/insights", "Insights"], ["/seo", "SEO"], ["/gbp", "Business Profile"], ["/website", "Website"],
-  ["/paid", "Paid ads"], ["/messaging", "Email & WhatsApp"], ["/crm", "Leads & CRM"], ["/revenue", "Revenue"], ["/attribution", "Attribution"], ["/partnerships", "Partnerships"], ["/integrations", "Integrations"], ["/settings", "Settings"],
-] as const;
+const NAV: { group: string; items: [string, string, string][] }[] = [
+  { group: "Command", items: [["/", "Overview", "home"], ["/insights", "Insights", "bulb"], ["/ai", "AI Intelligence", "spark"], ["/reports", "Reports", "doc"]] },
+  { group: "Channels", items: [["/seo", "SEO", "gsc"], ["/gbp", "Business Profile", "gbp"], ["/paid", "Paid ads", "google_ads"], ["/messaging", "Email & WhatsApp", "whatsapp"], ["/influencers", "Influencers", "influencer"], ["/competitors", "Competitors", "trophy"]] },
+  { group: "Patients", items: [["/website", "Website", "site"], ["/funnel", "Funnel Analytics", "funnel"], ["/crm", "Leads & CRM", "leads"], ["/revenue", "Revenue & payments", "rupee"], ["/attribution", "Attribution", "attribution"]] },
+  { group: "Planning", items: [["/budget-plan", "Budget Proposal", "plan"], ["/budget", "Budget Simulator", "sliders"], ["/partnerships", "Partnerships", "handshake"]] },
+  { group: "Setup", items: [["/integrations", "Integrations", "plug"], ["/settings", "Settings", "gear"]] },
+];
 
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -71,10 +76,15 @@ function Shell({ email }: { email: string }) {
       <aside className={`side ${open ? "open" : ""}`}>
         <div className="brand"><span className="mark">E</span><div><strong>Elites Dental Care</strong><small>Marketing intelligence</small></div></div>
         <nav onClick={() => setOpen(false)}>
-          {NAV.map(([to, label], i) => (
-            <NavLink key={to} to={to} end={to === "/"} className={({ isActive }) => (isActive ? "on" : "")}>
-              <span className="nav-n">{String(i + 1).padStart(2, "0")}</span>{label}
-            </NavLink>
+          {NAV.map((g) => (
+            <div key={g.group} className="nav-group">
+              <div className="nav-label">{g.group}</div>
+              {g.items.map(([to, label, icon]) => (
+                <NavLink key={to} to={to} end={to === "/"} className={({ isActive }) => (isActive ? "on" : "")}>
+                  <Logo id={icon} size={24} />{label}
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
         <div className="side-foot">
@@ -97,6 +107,7 @@ function Shell({ email }: { email: string }) {
             <Route path="/ai" element={<AiIntelligence />} />
             <Route path="/messaging" element={<Messaging />} />
             <Route path="/competitors" element={<Competitors />} />
+            <Route path="/influencers" element={<Influencers />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/budget-plan" element={<BudgetPlan />} />
             <Route path="/seo" element={<Seo />} />

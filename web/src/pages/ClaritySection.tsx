@@ -45,12 +45,12 @@ export default function ClaritySection({ n }: { n: string }) {
     return (
       <>
         <KpiRow>
-          <Kpi label="Recorded sessions" value={o.sessions} defKey="clarity_sessions" sub={`${fmt.int(o.bots)} bot sessions left out`} />
-          <Kpi label="Avg scroll depth" value={o.scroll} format="pct" defKey="clarity_scroll" />
-          <Kpi label="Active time / session" value={o.active} format="secs" defKey="clarity_active" />
-          <Kpi label="Rage-click sessions" value={o.rage} format="pct" defKey="clarity_rage" invert />
-          <Kpi label="Dead-click sessions" value={o.dead} format="pct" defKey="clarity_dead" invert />
-          <Kpi label="Quick-back sessions" value={o.quickback} format="pct" defKey="clarity_quickback" invert />
+          <Kpi logo="clarity" label="Recorded sessions" value={o.sessions} defKey="clarity_sessions" sub={`${fmt.int(o.bots)} bot sessions left out`} />
+          <Kpi logo="clarity" label="Avg scroll depth" value={o.scroll} format="pct" defKey="clarity_scroll" />
+          <Kpi logo="clarity" label="Active time / session" value={o.active} format="secs" defKey="clarity_active" />
+          <Kpi logo="clarity" label="Rage-click sessions" value={o.rage} format="pct" defKey="clarity_rage" invert />
+          <Kpi logo="clarity" label="Dead-click sessions" value={o.dead} format="pct" defKey="clarity_dead" invert />
+          <Kpi logo="clarity" label="Quick-back sessions" value={o.quickback} format="pct" defKey="clarity_quickback" invert />
         </KpiRow>
         {tests > 0 && <p className="warnline">{fmt.int(tests)} page visit{tests === 1 ? "" : "s"} in this period {tests === 1 ? "was" : "were"} our own testing (dashboard QA links and the Elementor editor preview). They're inside the totals above — Clarity doesn't split them out — and hidden in the page table below.</p>}
         {o.sessions < 30 && <p className="muted small">Fewer than 30 sessions so far: treat percentages as early signals, not rates.</p>}

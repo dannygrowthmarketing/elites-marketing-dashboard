@@ -204,8 +204,8 @@ export function Geo({ tabs }: { tabs: ReactNode }) {
         {ai.error ? <ErrorBox msg={ai.error} /> : !ai.data ? <Loading /> : (
           <>
             <KpiRow>
-              <Kpi big label="AI-assistant sessions" value={sessions} />
-              <Kpi label="Share of all sessions" value={ratio(sessions, t.ga4_sessions)} format="pct" />
+              <Kpi logo="ga4" big label="AI-assistant sessions" value={sessions} />
+              <Kpi logo="ga4" label="Share of all sessions" value={ratio(sessions, t.ga4_sessions)} format="pct" />
               <Kpi label="Assistants sending visits" value={byAssistant.length} />
               <Kpi label="AI sessions, all time" value={everAi.reduce((s, r) => s + r.sessions, 0)} sub={firstAi ? `first on ${new Date(firstAi + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}` : "none yet"} />
             </KpiRow>

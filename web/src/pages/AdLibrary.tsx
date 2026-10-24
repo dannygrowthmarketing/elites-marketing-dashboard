@@ -134,7 +134,7 @@ export default function AdLibrary({ tabs }: { tabs?: ReactNode }) {
           <Kpi label="Clicks" value={tot.clk} format="int" />
           <Kpi label="CTR" value={tot.ctr} format="pct" />
           <Kpi label="Spend" value={tot.cost} format="inr" />
-          <Kpi label="Avg CPC" value={tot.cpc} format="inr" />
+          <Kpi logo="google_ads" label="Avg CPC" value={tot.cpc} format="inr" />
           <Kpi label="Conversions" value={tot.conv} format="dec" />
           <Kpi label="Conv. rate" value={tot.cr} format="pct" />
           <Kpi label="Cost / conversion" value={tot.cpa} format="inr" />

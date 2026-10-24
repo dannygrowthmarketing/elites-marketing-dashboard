@@ -272,6 +272,55 @@ await as("owner@x.com", async () => {
   assert.ok(rejected, "rejected sources can't be ingested");
 }
 
+// Payment gateways
+{
+  await db.exec(`insert into leads (id, first_inquiry_at, inquiry_type, first_source, first_medium, status, dedupe_key, phone_e164)
+    values ('44444444-4444-4444-4444-444444444444','2026-10-03T05:00:00Z','booking','facebook','paid','new','k9','+919845012345')`);
+  const ing = async (p) => (await db.query("select svc_payment_ingest($1::jsonb) j", [JSON.stringify(p)])).rows[0].j;
+  const pay = { gateway: "razorpay", event_key: "evt_1", type: "payment", payment_id: "pay_A", amount: 1500, paid_at: "2026-10-05T10:00:00Z", method: "upi", vpa: "someone@okaxis", phone: "98450 12345" };
+  const r1 = await ing(pay);
+  assert.equal(r1.lead_matched, true, "payer phone matches the lead");
+  { const d = await ing(pay); assert.ok(d.duplicate || d.duplicate_payment, "same event twice is ignored"); }
+  assert.equal((await ing({ ...pay, event_key: "evt_1b" })).duplicate_payment, true, "same payment, new event id, no double revenue");
+  const e = (await db.query("select amount_inr, upi_app, entry_source, lead_id, channel from revenue_entries where invoice_ref = 'razorpay:pay_A'")).rows[0];
+  assert.equal(+e.amount_inr, 1500); assert.equal(e.upi_app, "Google Pay"); assert.equal(e.entry_source, "gateway");
+  const cols = (await db.query("select column_name from information_schema.columns where table_name in ('revenue_entries','payment_events')")).rows.map((r) => r.column_name);
+  assert.ok(!cols.some((c) => /vpa|phone/.test(c)), "no UPI id or phone column");
+  await ing({ gateway: "razorpay", event_key: "evt_2", type: "refund", payment_id: "pay_A", amount: 500 });
+  assert.equal(+(await db.query("select amount_inr from revenue_entries where invoice_ref = 'razorpay:pay_A'")).rows[0].amount_inr, 1000, "refund nets off");
+  await ing({ gateway: "cashfree", event_key: "cf_1", type: "payment", payment_id: "ord_9", amount: 800, method: "upi", vpa: "x@ybl" });
+  assert.equal((await db.query("select upi_app from revenue_entries where invoice_ref = 'cashfree:ord_9'")).rows[0].upi_app, "PhonePe");
+  assert.equal((await db.query("select status from integrations where source = 'cashfree'")).rows[0].status, "connected");
+  await as("viewer@x.com", async () => {
+    let blocked = false;
+    try { await db.query("select svc_payment_ingest('{}'::jsonb)"); } catch { blocked = true; }
+    assert.ok(blocked, "users can't post payments directly");
+    const s = (await db.query("select rpc_payment_summary('2026-10-01','2026-10-31') j")).rows[0].j;
+    assert.equal(s.payments, 2); assert.equal(+s.collected, 2300); assert.equal(+s.refunded, 500);
+    assert.ok(s.by_method.some((m) => m.method === "Google Pay"));
+  });
+}
+
+// Influencers
+{
+  await as("owner@x.com", async () => {
+    const r = (await db.query("select rpc_influencer_import($1::jsonb) j", [JSON.stringify([
+      { name: "Priya Eats", handle: "@priyaeats", followers: "12,400", phone: "98450 11111", area: "KR Puram", niche: "food" },
+      { name: "", handle: "" }, { handle: "momsofeastblr", platform: "Instagram" }])])).rows[0].j;
+    assert.equal(r.added, 2); assert.equal(r.skipped, 1);
+    const again = (await db.query("select rpc_influencer_import($1::jsonb) j", [JSON.stringify([{ handle: "PriyaEats", rate_inr: "₹5,000" }])])).rows[0].j;
+    assert.equal(again.updated, 1, "same handle updates, case-insensitive");
+    const p = (await db.query("select followers, rate_inr, name from influencers where handle = 'priyaeats'")).rows[0];
+    assert.equal(p.followers, 12400); assert.equal(+p.rate_inr, 5000); assert.equal(p.name, "Priya Eats");
+  });
+  await as("viewer@x.com", async () => {
+    assert.equal((await db.query("select count(*)::int n from influencers")).rows[0].n, 2);
+    let blocked = false;
+    try { await db.query("select rpc_influencer_import('[]'::jsonb)"); } catch { blocked = true; }
+    assert.ok(blocked, "viewers can't add influencers");
+  });
+}
+
 // Cron jobs registered
 const jobs = await db.query("select name from cron.job order by name");
 assert.equal(jobs.rows.length, 9);

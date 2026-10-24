@@ -77,7 +77,7 @@ export default function Messaging() {
         {waEv.loading ? <Loading /> : (
           <>
             <KpiRow>
-              <Kpi big label="WhatsApp taps from the website" value={waTaps} />
+              <Kpi logo="whatsapp" big label="WhatsApp taps from the website" value={waTaps} />
               <Kpi label="Pages it happens on" value={new Set(waByPage.map((r) => r.page)).size} />
             </KpiRow>
             {waTaps > 0 && <TrendChart rows={waByDay} height={180} series={[{ key: "taps", label: "WhatsApp taps", color: C.teal, kind: "bar" }]} />}
@@ -102,8 +102,8 @@ export default function Messaging() {
           <>
             <KpiRow>
               <Kpi label="Campaigns sent" value={cs.length} />
-              <Kpi label="Emails delivered" value={sent} />
-              <Kpi label="Click rate" value={ratio(uClicks, sent)} format="pct" sub="unique clickers ÷ emails sent" />
+              <Kpi logo="mailchimp" label="Emails delivered" value={sent} />
+              <Kpi logo="mailchimp" label="Click rate" value={ratio(uClicks, sent)} format="pct" sub="unique clickers ÷ emails sent" />
               <Kpi label="Open rate" value={ratio(uOpens, sent)} format="pct" sub="inflated by Apple Mail privacy" />
               <Kpi label="Unsubscribes" value={unsubs} invert />
               <Kpi label="Audience size" value={members} sub={`${audiences.data?.length ?? 0} audience${audiences.data?.length === 1 ? "" : "s"}`} />
@@ -123,8 +123,8 @@ export default function Messaging() {
         {emailTraffic.loading ? <Loading /> : (
           <>
             <KpiRow>
-              <Kpi label="Visits from email" value={emSessions} />
-              <Kpi label="Engaged" value={ratio(emEngaged, emSessions)} format="pct" />
+              <Kpi logo="mailchimp" label="Visits from email" value={emSessions} />
+              <Kpi logo="ga4" label="Engaged" value={ratio(emEngaged, emSessions)} format="pct" />
             </KpiRow>
             <DataTable rows={emByCampaign} empty="No visits tagged as email in this period. Add utm_medium=email to email links." cols={[
               { key: "source", label: "Source" }, { key: "campaign", label: "Campaign" },

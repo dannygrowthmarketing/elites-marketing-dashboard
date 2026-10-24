@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allocate, DEFAULT_ASSUMPTIONS, phase, project } from "./budgetPlan";
+import { allocate, byChannel, DEFAULT_ASSUMPTIONS, phase, project } from "./budgetPlan";
 
 describe("budget plan", () => {
   it("allocates exactly the total", () => {
@@ -27,5 +27,24 @@ describe("budget plan", () => {
     const a = project(allocate(500000, 6, "patients"), DEFAULT_ASSUMPTIONS), b = project(allocate(1000000, 6, "patients"), DEFAULT_ASSUMPTIONS);
     expect(b.patients).toBeGreaterThan(a.patients);
     expect(b.costPerPatient!).toBeGreaterThan(a.costPerPatient!);
+  });
+});
+
+describe("small budgets", () => {
+  it("works from ₹50K", () => {
+    for (const m of [1, 3, 6]) {
+      const p = allocate(50000, m, "patients");
+      expect(p.lines.reduce((a, l) => a + l.total, 0)).toBeCloseTo(50000, 0);
+      expect(p.lines.some((l) => l.item.key === "search")).toBe(true);
+    }
+  });
+  it("includes influencer and WhatsApp at ₹1L/month", () => {
+    const keys = allocate(300000, 3, "balanced").lines.map((l) => l.item.key);
+    expect(keys).toContain("influencer"); expect(keys).toContain("whatsapp"); expect(keys).toContain("email");
+  });
+  it("rolls lines up into channels", () => {
+    const c = byChannel(allocate(500000, 6, "balanced"));
+    expect(c.reduce((a, x) => a + x.total, 0)).toBeCloseTo(500000, 0);
+    expect(c.map((x) => x.key)).toContain("google");
   });
 });

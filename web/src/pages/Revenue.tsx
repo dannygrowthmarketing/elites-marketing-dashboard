@@ -6,12 +6,13 @@ import { supabase } from "../lib/supabase";
 import { fmt, ratio } from "../lib/metrics";
 import { FIELDS, SERVICES, SOURCES, guessMapping, prepareRows, type Field, type PreparedRow } from "../lib/revenueImport";
 import { C } from "./Overview";
+import { GatewayPayments } from "./Payments";
 
 const todayIso = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
 const monthLabel = (iso: string) => new Date(iso + "T00:00:00").toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
 const dayLabel = (iso: string) => new Date(iso + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 const MATCH: Record<string, string> = { phone: "by phone", email: "by email", lead: "picked in CRM", none: "" };
-const VIA: Record<string, string> = { crm: "CRM", single: "Entered", bulk: "Upload" };
+const VIA: Record<string, string> = { crm: "CRM", single: "Entered", bulk: "Upload", gateway: "Gateway" };
 
 export default function Revenue() {
   const f = useFilters();
@@ -42,9 +43,9 @@ export default function Revenue() {
       <Section n="01" title={`Revenue — ${f.label.toLowerCase()}`}>
         {!d ? <Loading /> : (
           <KpiRow>
-            <Kpi big label="Revenue collected" value={Number(d.total)} format="inr" defKey="revenue" />
+            <Kpi logo="rupee" big label="Revenue collected" value={Number(d.total)} format="inr" defKey="revenue" />
             <Kpi label="Payments" value={Number(d.entries)} />
-            <Kpi label="Average payment" value={ratio(Number(d.total), Number(d.entries))} format="inr" />
+            <Kpi logo="rupee" label="Average payment" value={ratio(Number(d.total), Number(d.entries))} format="inr" />
             <Kpi label="Traced to a marketing lead" value={traced} format="pct" sub={d.entries > 0 ? `${fmt.int(d.matched_entries)} of ${fmt.int(d.entries)} payments` : undefined} defKey="rev_traced" />
             <Kpi label="Google Ads return" value={gRoas} format="x" defKey="roas"
               sub={Number(d.google_ads_spend) > 0 ? `${fmt.inr(Number(d.google_ads_revenue))} from ${fmt.inr(Number(d.google_ads_spend))} spend` : "No Google Ads spend in period"} />
@@ -54,11 +55,15 @@ export default function Revenue() {
         {d && Number(d.entries) > 0 && traced != null && traced < 0.5 && <p className="warnline">Less than half of revenue is traced to a lead. Add patient phone numbers to uploads so payments can be matched to the enquiry that brought them in.</p>}
       </Section>
 
-      <Section n="02" title="Last 12 months" note="Calendar months ending with the selected period. Always shows the full year, whatever the date filter.">
+      <Section n="02" title="Online payments" note="UPI (Google Pay, PhonePe, Paytm), cards and netbanking collected through Razorpay, PhonePe PG or Cashfree. They are added to revenue automatically.">
+        <GatewayPayments />
+      </Section>
+
+      <Section n="03" title="Last 12 months" note="Calendar months ending with the selected period. Always shows the full year, whatever the date filter.">
         {!d ? <Loading h={220} /> : <MonthChart rows={d.by_month ?? []} />}
       </Section>
 
-      <Section n="03" title="Where it came from" note="Matched payments use the lead's first marketing touch. Unmatched payments use the source the clinic entered.">
+      <Section n="04" title="Where it came from" note="Matched payments use the lead's first marketing touch. Unmatched payments use the source the clinic entered.">
         <div className="two-col">
           <DataTable rows={d ? d.by_channel : null} csvName="revenue-by-source" empty="No revenue in this period." cols={[
             { key: "channel", label: "Source", render: (r: any) => <>{r.channel}{r.from_leads ? null : <span className="muted small"> · clinic-entered</span>}</> },
@@ -76,7 +81,7 @@ export default function Revenue() {
       </Section>
 
       {canEdit && (
-        <Section n="04" title="Add revenue">
+        <Section n="05" title="Add revenue">
           <div className="page-tabs" role="tablist">
             <button role="tab" className={tab === "single" ? "on" : ""} onClick={() => setTab("single")}>One payment</button>
             <button role="tab" className={tab === "bulk" ? "on" : ""} onClick={() => setTab("bulk")}>Upload Excel / CSV</button>
@@ -85,12 +90,12 @@ export default function Revenue() {
         </Section>
       )}
 
-      <Section n={canEdit ? "05" : "04"} title="Payments" note="Up to 500 most recent in the selected period.">
+      <Section n={canEdit ? "06" : "05"} title="Payments" note="Up to 500 most recent in the selected period.">
         <EntriesTable rows={d ? d.entries_list : null} canEdit={canEdit} onChange={f.refresh} />
       </Section>
 
       {(batches.data?.length ?? 0) > 0 && (
-        <Section n={canEdit ? "06" : "05"} title="Uploads" note="Undo removes the upload and every payment it added.">
+        <Section n={canEdit ? "07" : "06"} title="Uploads" note="Undo removes the upload and every payment it added.">
           <BatchesTable rows={batches.data} canEdit={canEdit} onChange={f.refresh} />
         </Section>
       )}

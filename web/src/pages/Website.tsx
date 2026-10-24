@@ -69,11 +69,11 @@ export default function Website() {
       {none && integ.data?.[0]?.status !== "connected" && <Pending source="Google Analytics 4" />}
       <Section n="01" title="Traffic">
         <KpiRow>
-          <Kpi label="Sessions" value={t.ga4_sessions} prev={p?.ga4_sessions} defKey="ga4_sessions" />
-          <Kpi label="Engaged sessions" value={t.ga4_engaged} prev={p?.ga4_engaged} defKey="ga4_engaged" />
-          <Kpi label="Engagement rate" value={ratio(t.ga4_engaged, t.ga4_sessions)} prev={p ? ratio(p.ga4_engaged, p.ga4_sessions) : undefined} format="pct" defKey="ga4_engagement_rate" />
-          <Kpi label="Users (sum of daily)" value={t.ga4_users} prev={p?.ga4_users} defKey="ga4_users" />
-          <Kpi label="Booking conversion rate" value={none ? null : convRate(bookings, t.ga4_sessions)} format="pct" defKey="website_conversion_rate" />
+          <Kpi logo="ga4" label="Sessions" value={t.ga4_sessions} prev={p?.ga4_sessions} defKey="ga4_sessions" />
+          <Kpi logo="ga4" label="Engaged sessions" value={t.ga4_engaged} prev={p?.ga4_engaged} defKey="ga4_engaged" />
+          <Kpi logo="ga4" label="Engagement rate" value={ratio(t.ga4_engaged, t.ga4_sessions)} prev={p ? ratio(p.ga4_engaged, p.ga4_sessions) : undefined} format="pct" defKey="ga4_engagement_rate" />
+          <Kpi logo="ga4" label="Users (sum of daily)" value={t.ga4_users} prev={p?.ga4_users} defKey="ga4_users" />
+          <Kpi logo="ga4" label="Booking conversion rate" value={none ? null : convRate(bookings, t.ga4_sessions)} format="pct" defKey="website_conversion_rate" />
         </KpiRow>
         {keyEventsTotal === 0 && !none && <p className="warnline">No GA4 key events are marked in this property, so GA4's own conversion columns read 0. Lead actions below are counted from raw events instead.</p>}
         <TrendChart rows={cur.data} prevRows={f.prev ? prev.data : null} series={[

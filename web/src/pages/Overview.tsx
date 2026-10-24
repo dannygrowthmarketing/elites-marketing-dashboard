@@ -3,6 +3,7 @@ import { Kpi, KpiRow, Loading, Page, Section, Tag, TrendChart, useRangeArgs, Err
 import { useFilters, useRpc, useTable } from "../state";
 import { fmt, ratio, sum } from "../lib/metrics";
 import { InsightList, useInsights } from "./Insights";
+import { Logo, SOURCE_MARK } from "../components/Logo";
 
 export const C = { navy: "#0B1F3A", gold: "#C9A84C", teal: "#2E7D7A", rust: "#B5543A", slate: "#5B6B82", plum: "#6B4E7A" };
 
@@ -47,22 +48,29 @@ export default function Overview() {
     <Page eyebrow="Elites Dental Care · Marketing intelligence" title="Overview"
       intro={<>Discovery to patients for <strong>{f.label.toLowerCase()}</strong>. Each number keeps its own source; systems that count the same visit differently are never added together.</>}>
       {cur.error && <ErrorBox msg={cur.error} />}
+      <div className="src-strip" aria-label="Data sources">
+        {(integ.data ?? []).filter((i) => SOURCE_MARK[i.source]).map((i) => (
+          <a key={i.source} href="#/integrations" className={`src-pill ${i.status === "connected" ? "ok" : i.status === "pending_approval" ? "wait" : ""}`} title={`${i.label}: ${i.status.replace(/_/g, " ")}`} style={{ textDecoration: "none", color: "inherit" }}>
+            <Logo id={SOURCE_MARK[i.source]} size={22} />{i.label.split(" (")[0]}<span className="dot" />
+          </a>
+        ))}
+      </div>
 
       <Section n="01" title="Discovery">
         <KpiRow>
-          <Kpi big label="Google Search impressions" value={t.gsc_impressions} prev={pv("gsc_impressions")} defKey="gsc_impressions" format="compact" />
-          <Kpi big label="Business Profile views" value={t.gbp_views} prev={pv("gbp_views")} defKey="gbp_views" format="compact" />
-          <Kpi big label="Ad impressions" value={t.ads_impressions} prev={pv("ads_impressions")} format="compact" />
+          <Kpi logo="gsc" big label="Google Search impressions" value={t.gsc_impressions} prev={pv("gsc_impressions")} defKey="gsc_impressions" format="compact" />
+          <Kpi logo="gbp" big label="Business Profile views" value={t.gbp_views} prev={pv("gbp_views")} defKey="gbp_views" format="compact" />
+          <Kpi logo="google_ads" big label="Ad impressions" value={t.ads_impressions} prev={pv("ads_impressions")} format="compact" />
         </KpiRow>
       </Section>
 
       <Section n="02" title="Visits and actions">
         <KpiRow>
-          <Kpi label="Website sessions" value={t.ga4_sessions} prev={pv("ga4_sessions")} defKey="ga4_sessions" />
-          <Kpi label="Organic search clicks" value={t.gsc_clicks} prev={pv("gsc_clicks")} defKey="gsc_clicks" />
-          <Kpi label="Profile call taps" value={t.gbp_calls} prev={pv("gbp_calls")} defKey="gbp_calls" />
-          <Kpi label="Direction requests" value={t.gbp_directions} prev={pv("gbp_directions")} defKey="gbp_directions" />
-          <Kpi label="Ad clicks" value={t.ads_clicks} prev={pv("ads_clicks")} />
+          <Kpi logo="ga4" label="Website sessions" value={t.ga4_sessions} prev={pv("ga4_sessions")} defKey="ga4_sessions" />
+          <Kpi logo="gsc" label="Organic search clicks" value={t.gsc_clicks} prev={pv("gsc_clicks")} defKey="gsc_clicks" />
+          <Kpi logo="gbp" label="Profile call taps" value={t.gbp_calls} prev={pv("gbp_calls")} defKey="gbp_calls" />
+          <Kpi logo="gbp" label="Direction requests" value={t.gbp_directions} prev={pv("gbp_directions")} defKey="gbp_directions" />
+          <Kpi logo="google_ads" label="Ad clicks" value={t.ads_clicks} prev={pv("ads_clicks")} />
         </KpiRow>
         <TrendChart rows={cur.data} prevRows={f.prev ? prev.data : null} series={[
           { key: "ga4_sessions", label: "Website sessions", color: C.navy, kind: "area" },
@@ -73,21 +81,21 @@ export default function Overview() {
 
       <Section n="03" title="Leads, bookings, revenue" note="CRM figures count identified people. Google Ads conversions are Google's own attribution and include taps, so they sit beside the CRM, not inside it.">
         <KpiRow>
-          <Kpi label="CRM leads" value={t.leads} prev={pv("leads")} defKey="crm_leads" />
-          <Kpi label="Appointments booked" value={t.bookings} prev={pv("bookings")} defKey="crm_booked" />
-          <Kpi label="Completed" value={t.completed} prev={pv("completed")} defKey="crm_completed" />
-          <Kpi label="Revenue recorded" value={t.revenue} prev={pv("revenue")} format="inr" defKey="revenue" />
-          <Kpi label="Google Ads conversions" value={t.ads_conversions} prev={pv("ads_conversions")} format="dec" defKey="ads_conversions" />
+          <Kpi logo="crm" label="CRM leads" value={t.leads} prev={pv("leads")} defKey="crm_leads" />
+          <Kpi logo="crm" label="Appointments booked" value={t.bookings} prev={pv("bookings")} defKey="crm_booked" />
+          <Kpi logo="crm" label="Completed" value={t.completed} prev={pv("completed")} defKey="crm_completed" />
+          <Kpi logo="rupee" label="Revenue recorded" value={t.revenue} prev={pv("revenue")} format="inr" defKey="revenue" />
+          <Kpi logo="google_ads" label="Google Ads conversions" value={t.ads_conversions} prev={pv("ads_conversions")} format="dec" defKey="ads_conversions" />
         </KpiRow>
         {funnel.data ? <FunnelStrip f={funnel.data} /> : <Loading h={80} />}
       </Section>
 
       <Section n="04" title="Spend and efficiency">
         <KpiRow>
-          <Kpi label="Paid spend" value={totalSpend} prev={p ? ((p.ads_cost ?? 0) + (p.meta_spend ?? 0)) || null : undefined} format="inr" defKey="ads_cost" invert />
-          <Kpi label="Cost per Ads conversion" value={ratio(t.ads_cost, t.ads_conversions)} prev={p ? ratio(p.ads_cost, p.ads_conversions) : undefined} format="inr" defKey="ads_cpa" invert />
-          <Kpi label="Cost per CRM lead (all paid)" value={t.leads ? ratio(totalSpend, t.leads) : null} format="inr" defKey="cpl" invert sub="see Attribution for per-channel" />
-          <Kpi label="ROAS" value={t.revenue != null && totalSpend ? ratio(t.revenue, totalSpend) : null} format="x" defKey="roas" />
+          <Kpi logo="google_ads" label="Paid spend" value={totalSpend} prev={p ? ((p.ads_cost ?? 0) + (p.meta_spend ?? 0)) || null : undefined} format="inr" defKey="ads_cost" invert />
+          <Kpi logo="google_ads" label="Cost per Ads conversion" value={ratio(t.ads_cost, t.ads_conversions)} prev={p ? ratio(p.ads_cost, p.ads_conversions) : undefined} format="inr" defKey="ads_cpa" invert />
+          <Kpi logo="crm" label="Cost per CRM lead (all paid)" value={t.leads ? ratio(totalSpend, t.leads) : null} format="inr" defKey="cpl" invert sub="see Attribution for per-channel" />
+          <Kpi logo="rupee" label="ROAS" value={t.revenue != null && totalSpend ? ratio(t.revenue, totalSpend) : null} format="x" defKey="roas" />
         </KpiRow>
         <TrendChart rows={cur.data} series={[
           { key: "ads_cost", label: "Ad spend", color: C.gold, kind: "bar", format: "inr" },

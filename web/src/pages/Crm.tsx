@@ -41,10 +41,10 @@ export default function Crm() {
       actions={canEdit && <button className="btn" onClick={() => setAdding(true)}>+ Add lead</button>}>
       <Section n="01" title="Pipeline">
         <KpiRow>
-          <Kpi label="Leads" value={total} defKey="crm_leads" />
-          <Kpi label="Booked or completed" value={leads.data ? booked : null} />
-          <Kpi label="Lead → booking rate" value={total ? ratio(booked, total) : null} format="pct" defKey="lead_to_booking" />
-          <Kpi label="Follow-ups due" value={leads.data ? due : null} />
+          <Kpi logo="crm" label="Leads" value={total} defKey="crm_leads" />
+          <Kpi logo="crm" label="Booked or completed" value={leads.data ? booked : null} />
+          <Kpi logo="crm" label="Lead → booking rate" value={total ? ratio(booked, total) : null} format="pct" defKey="lead_to_booking" />
+          <Kpi logo="crm" label="Follow-ups due" value={leads.data ? due : null} />
         </KpiRow>
         <div className="seg wrap">
           <button className={status === "all" ? "on" : ""} onClick={() => setStatus("all")}>All {total != null && `(${total})`}</button>

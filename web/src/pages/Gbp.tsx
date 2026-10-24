@@ -45,9 +45,9 @@ export default function Gbp() {
         : undefined}</Pending>}
       <Section n="01" title="Profile performance">
         <KpiRow>
-          <Kpi label="Profile views" value={t.gbp_views} prev={p?.gbp_views} defKey="gbp_views" />
-          <Kpi label="Call taps" value={t.gbp_calls} prev={p?.gbp_calls} defKey="gbp_calls" />
-          <Kpi label="Direction requests" value={t.gbp_directions} prev={p?.gbp_directions} defKey="gbp_directions" />
+          <Kpi logo="gbp" label="Profile views" value={t.gbp_views} prev={p?.gbp_views} defKey="gbp_views" />
+          <Kpi logo="gbp" label="Call taps" value={t.gbp_calls} prev={p?.gbp_calls} defKey="gbp_calls" />
+          <Kpi logo="gbp" label="Direction requests" value={t.gbp_directions} prev={p?.gbp_directions} defKey="gbp_directions" />
           <Kpi label="Website clicks" value={t.gbp_website} prev={p?.gbp_website} />
         </KpiRow>
         <TrendChart rows={cur.data} prevRows={f.prev ? prev.data : null} series={[

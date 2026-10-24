@@ -21,10 +21,10 @@ export default function Attribution() {
       intro={<>First-touch attribution from the CRM: each lead is credited to the source of their first recorded visit. Spend is joined only where it maps cleanly (google / cpc ↔ Google Ads, facebook|instagram / paid ↔ Meta). Revenue counts only what the clinic has entered.</>}>
       <Section n="01" title="Google Ads: platform vs reality" note="Three systems, three definitions. They describe overlapping events, so they're shown side by side and never summed.">
         <KpiRow>
-          <Kpi label="Ads spend" value={t.ads_cost} format="inr" />
-          <Kpi label="Google-attributed conversions" value={fn?.ads_conversions ?? null} format="dec" defKey="ads_conversions" sub="Google's count" />
+          <Kpi logo="google_ads" label="Ads spend" value={t.ads_cost} format="inr" />
+          <Kpi logo="google_ads" label="Google-attributed conversions" value={fn?.ads_conversions ?? null} format="dec" defKey="ads_conversions" sub="Google's count" />
           <Kpi label="GA4 confirmed bookings (all channels)" value={fn?.ga4_bookings_confirmed ?? null} sub="site event" />
-          <Kpi label="CRM leads from google / cpc" value={g?.leads ?? (attr.data ? 0 : null)} sub="identified people" />
+          <Kpi logo="crm" label="CRM leads from google / cpc" value={g?.leads ?? (attr.data ? 0 : null)} sub="identified people" />
           <Kpi label="Booked from google / cpc" value={g?.booked ?? (attr.data ? 0 : null)} />
           <Kpi label="Cost per booked (Ads)" value={g?.booked ? costPer(g.spend, g.booked) : null} format="inr" defKey="cost_per_booking" invert />
         </KpiRow>

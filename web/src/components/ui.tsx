@@ -4,6 +4,7 @@ import { bucketKey, bucketLabel, compareRange, PRESETS, type Grain, type PresetK
 import { defOf, fmt, pctChange, type Num } from "../lib/metrics";
 import { downloadCsv } from "../lib/csv";
 import { useFilters } from "../state";
+import { Logo } from "./Logo";
 
 // ---------- layout ----------
 export function Page({ eyebrow, title, intro, children, actions }: { eyebrow: string; title: string; intro?: ReactNode; children: ReactNode; actions?: ReactNode }) {
@@ -36,15 +37,15 @@ export function Section({ n, title, note, children, right }: { n?: string; title
 }
 
 // ---------- KPI ----------
-export function Kpi({ label, value, prev, format = "int", defKey, invert = false, sub, big = false }: {
-  label: string; value: Num; prev?: Num; format?: keyof typeof fmt; defKey?: string; invert?: boolean; sub?: ReactNode; big?: boolean;
+export function Kpi({ label, value, prev, format = "int", defKey, invert = false, sub, big = false, logo }: {
+  label: string; value: Num; prev?: Num; format?: keyof typeof fmt; defKey?: string; invert?: boolean; sub?: ReactNode; big?: boolean; logo?: string;
 }) {
   const ch = prev === undefined ? null : pctChange(value, prev);
   const good = ch == null ? null : invert ? ch < 0 : ch > 0;
   const def = defKey ? defOf(defKey) : undefined;
   return (
     <div className={`kpi ${big ? "kpi-big" : ""}`} title={def ? `${def.formula}${def.notes ? "\n\n" + def.notes : ""}` : undefined}>
-      <div className="kpi-label">{label}{def && <span className="kpi-i" aria-hidden>i</span>}</div>
+      <div className="kpi-label">{logo && <Logo id={logo} size={20} />}{label}{def && <span className="kpi-i" aria-hidden>i</span>}</div>
       <div className="kpi-value">{value == null ? <span className="na">Not available</span> : fmt[format](value as number)}</div>
       <div className="kpi-foot">
         {ch != null && <span className={`delta ${good ? "up" : "down"}`}>{fmt.delta(ch)}</span>}
