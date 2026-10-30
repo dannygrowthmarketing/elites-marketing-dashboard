@@ -634,3 +634,29 @@ code.url { font-family: var(--mono); font-size: 11px; background: var(--hover); 
 .side nav a:hover .logo-tile { transform: scale(1.08); box-shadow: 0 0 0 1px rgba(255,255,255,.5), 0 4px 14px -2px color-mix(in srgb, var(--lc) 90%, transparent); }
 .side nav a.on .logo-tile { box-shadow: 0 0 0 2px #E9D9A6, 0 0 16px 2px color-mix(in srgb, var(--lc) 80%, transparent); }
 .side nav a { color: #E6ECF5; }
+
+/* Business Profile: reviews and search terms */
+.gbpx-dist { padding: 6px 8px 4px; display: grid; gap: 10px; }
+.gbpx-dist-row { display: grid; grid-template-columns: 34px 1fr 76px 86px; align-items: center; gap: 10px; }
+.gbpx-dist-lbl { font-weight: 700; font-size: 15px; }
+.gbpx-dist-bars { display: grid; gap: 3px; }
+.gbpx-bar { height: 12px; border-radius: 3px; }
+.gbpx-bar.ghost { height: 5px; background: color-mix(in srgb, var(--muted) 35%, transparent); }
+.gbpx-dist-n, .gbpx-dist-all { font-variant-numeric: tabular-nums; font-size: 13px; text-align: right; }
+.gbpx-dist-all { color: var(--muted); }
+.gbpx-dist-n small, .gbpx-dist-all small { color: var(--muted); }
+.gbpx-dist-key { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); padding-top: 4px; }
+.gbpx-dist-key i { display: inline-block; width: 12px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.gbpx-dist-key i.ghost { background: color-mix(in srgb, var(--muted) 35%, transparent); height: 4px; }
+.gbpx-explorer { margin-top: 4px; }
+.gbpx-explorer-head { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 6px 0 10px; }
+.gbpx-search { font: inherit; font-size: 13px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 999px; background: var(--card); color: var(--ink); min-width: 200px; flex: 1 1 200px; max-width: 320px; }
+.gbpx-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; margin-bottom: 12px; align-items: start; }
+.gbpx-rev { background: var(--card); border: 1px solid var(--rule); border-left: 4px solid var(--rule); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+.gbpx-rev.s5, .gbpx-rev.s4 { border-left-color: #2E8B57; } .gbpx-rev.s3 { border-left-color: #D9A441; } .gbpx-rev.s2, .gbpx-rev.s1 { border-left-color: #C4473A; }
+.gbpx-rev header { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.gbpx-stars { letter-spacing: 1px; font-size: 15px; } .gbpx-stars b { font-weight: 400; } .gbpx-stars i { font-style: normal; color: color-mix(in srgb, var(--muted) 30%, transparent); }
+.gbpx-rev p { margin: 0; font-size: 13.5px; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 8; -webkit-box-orient: vertical; overflow: hidden; }
+.gbpx-rev blockquote { margin: 8px 0 0; padding: 6px 10px; border-left: 2px solid var(--rule); color: var(--muted); font-size: 12.5px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.chart-card { background: var(--card); border: 1px solid var(--rule); border-radius: 14px; padding: 14px 10px 8px; margin-bottom: 16px; min-width: 0; }
+@media (max-width: 760px) { .gbpx-dist-row { grid-template-columns: 30px 1fr 64px; } .gbpx-dist-all { display: none; } .gbpx-list { grid-template-columns: 1fr; } }
