@@ -286,9 +286,9 @@ await as("owner@x.com", async () => {
   assert.equal(+e.amount_inr, 1500); assert.equal(e.upi_app, "Google Pay"); assert.equal(e.entry_source, "gateway");
   const cols = (await db.query("select column_name from information_schema.columns where table_name in ('revenue_entries','payment_events')")).rows.map((r) => r.column_name);
   assert.ok(!cols.some((c) => /vpa|phone/.test(c)), "no UPI id or phone column");
-  await ing({ gateway: "razorpay", event_key: "evt_2", type: "refund", payment_id: "pay_A", amount: 500 });
+  await ing({ gateway: "razorpay", event_key: "evt_2", type: "refund", payment_id: "pay_A", amount: 500, paid_at: "2026-10-07T10:00:00Z" });
   assert.equal(+(await db.query("select amount_inr from revenue_entries where invoice_ref = 'razorpay:pay_A'")).rows[0].amount_inr, 1000, "refund nets off");
-  await ing({ gateway: "cashfree", event_key: "cf_1", type: "payment", payment_id: "ord_9", amount: 800, method: "upi", vpa: "x@ybl" });
+  await ing({ gateway: "cashfree", event_key: "cf_1", type: "payment", payment_id: "ord_9", amount: 800, paid_at: "2026-10-06T10:00:00Z", method: "upi", vpa: "x@ybl" });
   assert.equal((await db.query("select upi_app from revenue_entries where invoice_ref = 'cashfree:ord_9'")).rows[0].upi_app, "PhonePe");
   assert.equal((await db.query("select status from integrations where source = 'cashfree'")).rows[0].status, "connected");
   await as("viewer@x.com", async () => {

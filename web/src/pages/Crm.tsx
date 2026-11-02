@@ -17,14 +17,18 @@ export default function Crm() {
   const canEdit = f.role === "owner" || f.role === "editor";
   const [status, setStatus] = useState("all");
   const [showTest, setShowTest] = useState(false);
+  // The CRM is the clinic's patient book: default to everyone, with the date bar as an option.
+  const [scope, setScope] = useState<"all" | "range">(() => { try { return (localStorage.getItem("crm_scope") as any) || "all"; } catch { return "all"; } });
+  const pickScope = (v: "all" | "range") => { setScope(v); try { localStorage.setItem("crm_scope", v); } catch { /* storage blocked */ } };
   const [sp] = useSearchParams();
   const [open, setOpen] = useState<string | null>(sp.get("lead"));
   const [adding, setAdding] = useState(false);
   const leads = useTable<any>("leads", (q) => {
-    let x = q.select("*").gte("first_inquiry_at", f.range.start + "T00:00:00+05:30").lte("first_inquiry_at", f.range.end + "T23:59:59+05:30").order("first_inquiry_at", { ascending: false }).limit(2000);
+    let x = q.select("*").order("first_inquiry_at", { ascending: false }).limit(5000);
+    if (scope === "range") x = x.gte("first_inquiry_at", f.range.start + "T00:00:00+05:30").lte("first_inquiry_at", f.range.end + "T23:59:59+05:30");
     if (!showTest) x = x.eq("is_test", false);
     return x;
-  }, [f.range.start, f.range.end, showTest]);
+  }, [f.range.start, f.range.end, showTest, scope]);
   const rows = (leads.data ?? []).filter((l) => status === "all" || l.status === status);
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -39,7 +43,11 @@ export default function Crm() {
     <Page eyebrow="CRM" title="Leads & bookings"
       intro="Identified people only. Website forms and bookings arrive automatically with their source; calls, WhatsApp and walk-ins are added by staff. No clinical notes — keep treatment details in the clinic's own records."
       actions={canEdit && <button className="btn" onClick={() => setAdding(true)}>+ Add lead</button>}>
-      <Section n="01" title="Pipeline">
+      <Section n="01" title="Pipeline" right={
+        <div className="seg sm">
+          <button className={scope === "all" ? "on" : ""} onClick={() => pickScope("all")}>All time</button>
+          <button className={scope === "range" ? "on" : ""} onClick={() => pickScope("range")}>Selected dates ({f.label})</button>
+        </div>}>
         <KpiRow>
           <Kpi logo="crm" label="Leads" value={total} defKey="crm_leads" />
           <Kpi logo="crm" label="Booked or completed" value={leads.data ? booked : null} />
@@ -53,8 +61,8 @@ export default function Crm() {
         </div>
       </Section>
       <Section n="02" title="Leads">
-        <DataTable rows={leads.data ? rows : null} csvName="crm-leads" onRow={(r) => setOpen(r.id)} limit={50} empty="No leads in this period. Website form enquiries and bookings arrive here automatically." cols={[
-          { key: "first_inquiry_at", label: "First enquiry", render: (r) => new Date(r.first_inquiry_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }), value: (r) => r.first_inquiry_at },
+        <DataTable rows={leads.data ? rows : null} csvName="crm-leads" onRow={(r) => setOpen(r.id)} limit={50} empty={scope === "range" ? "No leads in the selected dates. Switch to All time to see every patient." : "No leads yet. Website form enquiries and bookings arrive here automatically."} cols={[
+          { key: "first_inquiry_at", label: "First enquiry", render: (r) => new Date(r.first_inquiry_at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" }), value: (r) => r.first_inquiry_at },
           { key: "name", label: "Name", render: (r) => <>{r.name ?? <span className="muted">—</span>} {r.is_test && <Tag>test</Tag>}</>, value: (r) => r.name },
           { key: "phone_e164", label: "Phone" },
           { key: "inquiry_type", label: "Type", render: (r) => r.inquiry_type.replace("_", " ") },
