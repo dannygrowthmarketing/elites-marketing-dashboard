@@ -6,6 +6,7 @@ import { shortPath } from "../lib/insights";
 import { channelOfGa4, withRates } from "../lib/funnel";
 import { C, StatusTag } from "./Overview";
 import { FunnelDiagram } from "./funnelData";
+import PatientLists from "./PatientLists";
 
 const WA_EVENTS = ["whatsapp_click", "joinchat"];
 
@@ -70,10 +71,12 @@ export default function Messaging() {
 
   return (
     <Page eyebrow="Channels" title="Email & WhatsApp"
-      intro="Email campaigns (Mailchimp), WhatsApp Business campaigns, and how both bring people to the clinic. What's already tracked on the website shows now; campaign numbers appear once each account is connected.">
+      intro="Patient lists for recalls, email campaigns (Mailchimp), WhatsApp Business campaigns, and how each brings people back to the clinic. What's already tracked on the website shows now; campaign numbers appear once each account is connected.">
       {notSetUp && <ErrorBox msg="Email & WhatsApp tables aren't set up yet — run the 24 Oct SQL file in Supabase." />}
 
-      <Section n="01" title="Website → WhatsApp" note="Taps on the site's WhatsApp button and chat widget (GA4). These are people starting a chat — the most common way patients reach out.">
+      <PatientLists n="01" />
+
+      <Section n="02" title="Website → WhatsApp" note="Taps on the site's WhatsApp button and chat widget (GA4). These are people starting a chat — the most common way patients reach out.">
         {waEv.loading ? <Loading /> : (
           <>
             <KpiRow>
@@ -90,7 +93,7 @@ export default function Messaging() {
         )}
       </Section>
 
-      <Section n="02" title="Email campaigns — Mailchimp" right={mc && <StatusTag s={mc.status} />}>
+      <Section n="03" title="Email campaigns — Mailchimp" right={mc && <StatusTag s={mc.status} />}>
         {mc?.status !== "connected" ? (
           <SetupCard title="Mailchimp isn't connected" steps={[
             "If the clinic already uses Mailchimp: in Mailchimp, open profile icon → Profile → Extras → API keys → Create A Key.",
@@ -134,7 +137,7 @@ export default function Messaging() {
         )}
       </Section>
 
-      <Section n="03" title="WhatsApp Business campaigns" right={wap && <StatusTag s={wap.status} />}
+      <Section n="04" title="WhatsApp Business campaigns" right={wap && <StatusTag s={wap.status} />}
         note="Broadcasts and template messages sent from the clinic's WhatsApp Business number.">
         {wap?.status !== "connected" ? (
           <SetupCard title="WhatsApp Business isn't connected" steps={[

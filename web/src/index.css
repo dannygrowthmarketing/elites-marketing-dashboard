@@ -660,3 +660,6 @@ code.url { font-family: var(--mono); font-size: 11px; background: var(--hover); 
 .gbpx-rev blockquote { margin: 8px 0 0; padding: 6px 10px; border-left: 2px solid var(--rule); color: var(--muted); font-size: 12.5px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .chart-card { background: var(--card); border: 1px solid var(--rule); border-radius: 14px; padding: 14px 10px 8px; margin-bottom: 16px; min-width: 0; }
 @media (max-width: 760px) { .gbpx-dist-row { grid-template-columns: 30px 1fr 64px; } .gbpx-dist-all { display: none; } .gbpx-list { grid-template-columns: 1fr; } }
+.pl-acts { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.pl-partner { margin-top: 14px; }
+.pl-partner p { margin: 6px 0 10px; }
